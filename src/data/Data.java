@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+
 import weka.core.Attribute;
+import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
@@ -29,6 +32,10 @@ public class Data {
 		this.changed = true;
 	}
 	
+	public static Data readCSV (final String file) throws IOException {
+		return Data.readCSV(new File(file));
+	}
+	
 	public static Data readCSV (final File file) throws IOException {
 		Data d = new Data();
 		
@@ -38,9 +45,8 @@ public class Data {
 		d.instances = loader.getDataSet();
 		
 		//Add magnitudes
-		d.instances.insertAttributeAt(
-				new Attribute("magnitude"),
-				d.instances.numAttributes());
+		Attribute magAttr = new Attribute("magnitude");
+		d.instances.insertAttributeAt(magAttr,d.instances.numAttributes());
 		
 		Instance instance;
 		Double x,y,z,mag;
@@ -53,8 +59,20 @@ public class Data {
 			instance.setValue(4, mag);
 		}
 		
+		//Add class "walking". All instances are set to unknown.
+		final FastVector walkingValues = new FastVector(2);
+		walkingValues.addElement("Yes");
+		walkingValues.addElement("No");
+		final Attribute walking = new Attribute("walking",walkingValues);
+		d.instances.insertAttributeAt(walking,d.instances.numAttributes());
+		d.instances.setClass(walking);
+		
 		d.changed = true;
 		return d;
+	}
+	
+	public void toArff(final String file) throws IOException {
+		this.toArff(new File(file));
 	}
 	
 	public void toArff(final File file) throws IOException {
@@ -104,6 +122,38 @@ public class Data {
 		}
 		
 		this.changed = false;
+	}
+	
+	/**
+	 * Creates a list of frames, which contain a vector of magnitudes.
+	 * Frames are 1 second long and overlap 50%
+	 */
+	public List<ArrayRealVector> toArrayRealVector() {
+		//Prepare list for number of windows
+		final int size = this.numOfWindows();
+		final List<ArrayRealVector> list = new ArrayList<ArrayRealVector>(size);
+		final Attribute magAttr = this.instances.attribute("magnitude");
+		//Iterate windows
+		for (int i = 0; i < size; i++) {
+			Data window = this.getWindow(i);
+			int windowsize = window.instances.numInstances();
+			ArrayRealVector vector = new ArrayRealVector(windowsize);
+			//Iterate instances in window
+			for (int j = 0; j < windowsize; j++) {
+				vector.setEntry(j, window.instances.instance(j).value(magAttr));
+			}
+			list.add(vector);
+		}
+		
+		
+		return list;
+	}
+	
+	public static void main(String[] args) throws IOException {
+		Data d = Data.readCSV("Project/train/walk_1_other.csv");
+		d.toArff("test.arff");
+		System.out.println(d.instances);
+		System.out.println(d.toArrayRealVector());
 	}
 	
 }
