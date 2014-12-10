@@ -2,11 +2,8 @@ package data;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.Vector;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -30,31 +27,6 @@ public class FrameSet {
 		}
 		
 		this.dimension = this.frameSet.get(0).getDimension();
-		
-	}
-	
-	public FrameSet(Vector<Double> inputVector, int frameSize, int frameOverlap){
-		
-		int stepSize = frameSize - frameOverlap;
-		int numberOfFrames = inputVector.size()/frameSize;
-		
-		if(stepSize <= 0){
-			throw new IllegalArgumentException("The window overlap needs to be strictly larger than the window size.");
-		}else if(numberOfFrames == 0){
-			throw new IllegalArgumentException("The window size needs to be smaller than the vector dimension.");
-		}
-		
-		this.frameSet = new ArrayList<ArrayRealVector>(numberOfFrames);
-		this.size = numberOfFrames;
-		this.dimension = frameSize;
-		
-		for(int i = 0; i < inputVector.size() - frameSize; i += frameSize){
-			double[] vector = new double[frameSize];
-			for(int j = 0; j < frameSize; j++){
-				vector[j] = inputVector.get(i+j);
-			}
-			this.frameSet.add(new ArrayRealVector(vector));
-		}
 		
 	}
 	
