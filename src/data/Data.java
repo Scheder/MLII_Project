@@ -127,19 +127,4 @@ public class Data {
 		this.changed = false;
 	}
 	
-	public static void main(String[] args) throws IOException {
-		Data d = Data.readCSV(new File("Project/train/walk_1_other.csv"));
-		System.out.println(d.instances);
-		System.out.println(d.numOfWindows());
-		System.out.println(d.windowFromIndices);
-		System.out.println(d.windowToIndices);
-		Data window = d.getWindow(0);
-		System.out.println(window.instances);
-		System.out.println(window.numOfWindows());
-		
-		
-		Data w2 = d.getWindow(d.numOfWindows()-1);
-		System.out.println(w2.instances);
-	}
-
 }
