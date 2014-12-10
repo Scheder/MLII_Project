@@ -2,11 +2,11 @@ package classifier;
 
 import codebook.Codebook;
 import codebook.CodebookFactory;
-import codebook.Dataset;
+import data.FrameSet;
 
 public class ClassifierFactory {
 	
-	public static void createClassifier(Dataset labeled, Dataset unlabeled){
+	public static void createClassifier(FrameSet labeled, FrameSet unlabeled){
 		
 		// Fast code book learning.
 		// TODO: choose values, or make value picker.
