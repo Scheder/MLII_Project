@@ -2,7 +2,15 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-	<classpathentry kind="lib" path="lib/commons-math3-3.3-javadoc.jar"/>
-	<classpathentry kind="lib" path="lib/commons-math3-3.3.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math3-3.3.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/MLII/lib/commons-math3-3.3-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/weka-3.6.11.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="platform:/resource/MLII/lib/docs/weka"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
