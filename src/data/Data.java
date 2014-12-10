@@ -1,9 +1,10 @@
-package mlii.project;
+package data;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Vector;
 
+import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
@@ -13,6 +14,7 @@ public class Data {
 	
 	private static final Double window_size = 1.0; //In seconds
 	private static final Double overlap = 0.5; //In percentage of window overlap 
+	private static final Attribute magAttr = new Attribute("magnitude");
 	
 	private Instances instances;
 	public Vector<Double> t;
@@ -30,12 +32,16 @@ public class Data {
 		this.magnitude = new Vector<Double>();
 	}
 	
-	public static Data read (final File file) throws IOException {
+	public static Data readCSV (final File file) throws IOException {
 		Data d = new Data();
 		
+		//Read CSV file with t,x,y and z data
 		CSVLoader loader = new CSVLoader();
 		loader.setSource(file);
 		d.instances = loader.getDataSet();
+		
+		//Add magnitudes
+		d.instances.insertAttributeAt(Data.magAttr,d.instances.numAttributes());
 		
 		Instance instance;
 		Double t,x,y,z,mag;
@@ -46,6 +52,7 @@ public class Data {
 			y = instance.value(2);
 			z = instance.value(3);
 			mag = Math.sqrt(x*x + y*y + z*z);
+			instance.setValue(4, mag);
 			
 			d.t.add(i,t);
 			d.x.add(i,x);
@@ -69,7 +76,8 @@ public class Data {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Data d = Data.read(new File("Project/train/walk_1_other.csv"));
+		Data d = Data.readCSV(new File("Project/train/walk_1_other.csv"));
+		System.out.println(d.instances);
 	}
 
 }
