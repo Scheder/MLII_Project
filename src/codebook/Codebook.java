@@ -54,7 +54,7 @@ public class Codebook {
 		}
 	}
 	
-	public void learnUnlabeledData(Dataset unlabeledData, String partitionStyle, int partitionOption, int convergenceThreshold, double alpha){
+	public void learnUnlabeledData(Dataset unlabeledData, String partitionStyle, int partitionOption, double convergenceThreshold, double alpha){
 		double previousDistance = Double.MAX_VALUE;
 		boolean converged = false;
 		
