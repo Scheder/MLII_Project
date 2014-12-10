@@ -12,8 +12,9 @@ import weka.core.converters.CSVLoader;
 
 public class Data {
 	
-	private static final Double window_size = 1.0; //In seconds
-	private static final Double overlap = 0.5; //In percentage of window overlap 
+	private static final Double windowSize = 1.0; //In seconds.
+	private static final Double overlap = 0.5; //In percentage of window overlap.
+	private static final int samplingRate = 50 //In Hz.
 	private static final Attribute magAttr = new Attribute("magnitude");
 	
 	private Instances instances;

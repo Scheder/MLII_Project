@@ -82,6 +82,11 @@ public class Codebook {
 		}
 	}
 	
+	public Codebook getMostInformativeSubset(){
+		// TODO implement
+		return null;
+	}
+	
 	private double getLeastSquaresDistance(
 			Dataset unlabeledData, Array2DRowRealMatrix activationVectors, double alpha) {
 		
