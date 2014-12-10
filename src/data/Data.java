@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
@@ -17,20 +16,20 @@ import weka.core.converters.CSVLoader;
 
 public class Data {
 	
-	private static final Double windowSize = 1.0; //In seconds
-	private static final Double overlap = 0.5; //In percentage of window overlap 
-	private static final Double sampleRate = 50.0; //In Hz
+	//All windows are assumed the same size
+	private static final int sampleRate = 50; //In Hz
+	private static final int windowSize = 1 * Data.sampleRate; //Number of instances in window
+	private static final Double overlap = 0.5; //In percentage of window overlap
+	private static final int instancesBetweenWindows = ((Double)((1-Data.overlap) * Data.windowSize)).intValue();
 	
 	private Instances instances;
-	private List<Integer> windowFromIndices;
-	private List<Integer> windowToIndices;
-	private boolean changed;
 	
 	private Data() {
 		this.instances = null;
-		this.windowFromIndices = new ArrayList<Integer>();
-		this.windowToIndices = new ArrayList<Integer>();
-		this.changed = true;
+	}
+	
+	private Data(Instances instances) {
+		this.instances = instances;
 	}
 	
 	public static Data readCSV (final String file) throws IOException {
@@ -68,7 +67,6 @@ public class Data {
 		d.instances.insertAttributeAt(walking,d.instances.numAttributes());
 		d.instances.setClass(walking);
 		
-		d.changed = true;
 		return d;
 	}
 	
@@ -84,45 +82,19 @@ public class Data {
 		saver.writeBatch();
 	}
 	
+	/**
+	 * Get window with given index
+	 * @param index - Index starts at 0
+	 * @return
+	 */
 	public Data getWindow(final int index) {
-		if (this.changed) this.getWindowIndices();
-		
-		Data d = new Data();
-		final int fromIndex = this.windowFromIndices.get(index);
-		final int toIndex = this.windowToIndices.get(index);
-		
-		d.instances = new Instances(this.instances, fromIndex, (toIndex-fromIndex));
-		
-		return d;
+		final int fromIndex = Data.instancesBetweenWindows * index;
+		return new Data(new Instances(this.instances, fromIndex, Data.windowSize));
 	}
 	
 	public int numOfWindows() {
-		if (this.changed) this.getWindowIndices();
-		return this.windowFromIndices.size();
-	}
-	
-	/**
-	 * For now this function assumes Data only contains the data of one file,
-	 * for which is assumed that the data has samplerate instances per second,
-	 * without time hiatuses.
-	 */
-	private void getWindowIndices() {
-		int windowSize = ((Double)(Data.sampleRate * Data.windowSize)).intValue();
-		int overlapSize = new Double((1.0-Data.overlap) * windowSize).intValue();
-		
-		int fromIndex,toIndex;
-		for (fromIndex = 0, toIndex = windowSize; toIndex < this.instances.numInstances();
-				fromIndex += overlapSize, toIndex += overlapSize) {
-			this.windowFromIndices.add(fromIndex);
-			this.windowToIndices.add(toIndex);
-		}
-		
-		if (fromIndex < this.instances.numInstances()) {
-			this.windowFromIndices.add(fromIndex);
-			this.windowToIndices.add(this.instances.numInstances());
-		}
-		
-		this.changed = false;
+		if (this.instances.numInstances() < Data.windowSize) return 0;
+		return (this.instances.numInstances() - Data.windowSize) / Data.instancesBetweenWindows + 1;
 	}
 	
 	/**
@@ -137,10 +109,9 @@ public class Data {
 		//Iterate windows
 		for (int i = 0; i < size; i++) {
 			Data window = this.getWindow(i);
-			int windowsize = window.instances.numInstances();
-			ArrayRealVector vector = new ArrayRealVector(windowsize);
+			ArrayRealVector vector = new ArrayRealVector(Data.windowSize);
 			//Iterate instances in window
-			for (int j = 0; j < windowsize; j++) {
+			for (int j = 0; j < Data.windowSize; j++) {
 				vector.setEntry(j, window.instances.instance(j).value(magAttr));
 			}
 			list.add(vector);
@@ -150,11 +121,25 @@ public class Data {
 		return list;
 	}
 	
+	@Override
+	public String toString() {
+		String str = "";
+		str += "[windowsize:"+Data.windowSize;
+		str += ",overlap:"+Data.overlap;
+		str += ",numberOfInstances:"+this.instances.numInstances();
+		str += ",numberOfWindows:"+this.numOfWindows();
+		str += ",instances:\n"+this.instances;
+		return str;
+	}
+	
 	public static void main(String[] args) throws IOException {
 		Data d = Data.readCSV("Project/train/walk_1_other.csv");
 		d.toArff("test.arff");
-		System.out.println(d.instances);
+		System.out.println(d);
 		System.out.println(d.toArrayRealVector());
+		for (int i = 0; i < d.numOfWindows(); i++) {
+			System.out.println(d.getWindow(i));
+		}
 	}
 	
 }
