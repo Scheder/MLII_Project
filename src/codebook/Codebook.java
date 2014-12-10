@@ -13,6 +13,8 @@ import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
+import data.FrameSet;
+
 
 public class Codebook {
 
@@ -54,17 +56,17 @@ public class Codebook {
 		}
 	}
 	
-	public void learnUnlabeledData(Dataset unlabeledData, String partitionStyle, int partitionOption, double convergenceThreshold, double alpha){
+	public void learnUnlabeledData(FrameSet unlabeledData, String partitionStyle, int partitionOption, double convergenceThreshold, double alpha){
 		double previousDistance = Double.MAX_VALUE;
 		boolean converged = false;
 		
-		List<Dataset> batches;
+		List<FrameSet> batches;
 		
 		while(!converged){
 			batches = unlabeledData.partition(partitionStyle, partitionOption);
 			Array2DRowRealMatrix activationVectors = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), unlabeledData.size());
 			int i = 0;
-			for(Dataset batch : batches){
+			for(FrameSet batch : batches){
 				Array2DRowRealMatrix activationForBatch = featureSignSearch(batch, alpha);
 				improveWithLeastSquaresSolve(batch, activationForBatch);
 				for(int j = 0; j < batches.size(); j++){
@@ -82,8 +84,13 @@ public class Codebook {
 		}
 	}
 	
+	public Codebook getMostInformativeSubset(){
+		// TODO implement
+		return null;
+	}
+	
 	private double getLeastSquaresDistance(
-			Dataset unlabeledData, Array2DRowRealMatrix activationVectors, double alpha) {
+			FrameSet unlabeledData, Array2DRowRealMatrix activationVectors, double alpha) {
 		
 		double accumulator = 0;
 		RealMatrix difference = unlabeledData.toMatrix().subtract(basisVectors.multiply(activationVectors));
@@ -96,14 +103,13 @@ public class Codebook {
 		return accumulator;
 	}
 
-	private Array2DRowRealMatrix featureSignSearch(Dataset batch, double alpha){
+	private Array2DRowRealMatrix featureSignSearch(FrameSet batch, double alpha){
 		// TODO check correctness
-		Array2DRowRealMatrix matrix = batch.toMatrix();
-		Array2DRowRealMatrix activationMatrix = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), matrix.getColumnDimension());
+		Array2DRowRealMatrix activationMatrix = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), batch.size());
 		
 		// For each vector in batch,
 		for(int i = 0; i < batch.size(); i++){
-			RealVector y = matrix.getColumnVector(i);
+			RealVector y = batch.getFrame(i);
 			
 			// Run a featureSignSearch...
 			RealVector a = featureSignSearch(y, alpha);
@@ -268,7 +274,7 @@ public class Codebook {
 		
 	}
 	
-	private void improveWithLeastSquaresSolve(Dataset batch, Array2DRowRealMatrix activationForBatch){
+	private void improveWithLeastSquaresSolve(FrameSet batch, Array2DRowRealMatrix activationForBatch){
 		// We solve the least squares problem
 		// transpose(batch) = transpose(activationForBatch) * transpose(codebook)
 		// for codebook and update codebook.
