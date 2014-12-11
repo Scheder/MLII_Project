@@ -12,5 +12,6 @@
 			<attribute name="javadoc_location" value="platform:/resource/MLII/lib/docs/weka"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="lib/smile.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

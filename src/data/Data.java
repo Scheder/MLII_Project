@@ -8,6 +8,7 @@ import java.util.Vector;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
+import codebook.CodebookFactory;
 import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
@@ -151,10 +152,14 @@ public class Data {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Data d = Data.readCSV("Project/train/walk_1_other.csv");
+		Data d = Data.readCSV("Project/train/walk_5_other.csv");
 		d.toArff("test.arff");
-		System.out.println(d.instances);
-		System.out.println(d.toArrayRealVector());
+		//System.out.println(d.instances);
+		//System.out.println(d.toArrayRealVector());
+		FrameSet frameSet = new FrameSet(d.toArrayRealVector(), sampleRate.intValue());
+		System.out.println(frameSet.size());
+		
+		CodebookFactory.newCodebook(frameSet, "partitionSize", 20, 40, 10, 0.5);
 	}
 	
 }
