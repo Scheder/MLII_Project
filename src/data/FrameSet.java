@@ -15,8 +15,13 @@ public class FrameSet {
 	private final int size;
 	private final int dimension;
 	
-	public FrameSet(Collection<ArrayRealVector> frameSet, int windowSize){
+	public FrameSet(Collection<ArrayRealVector> frameSet){
 		
+		this.frameSet = new ArrayList<ArrayRealVector>(frameSet);
+		this.size = this.frameSet.size();
+		this.dimension = this.frameSet.get(0).getDimension();
+		
+		/**
 		List<ArrayRealVector> newFrameSet = new ArrayList<ArrayRealVector>();
 		
 		for(RealVector frame : frameSet){
@@ -30,7 +35,7 @@ public class FrameSet {
 		this.frameSet = newFrameSet;
 		this.size = this.frameSet.size();
 		this.dimension = this.frameSet.get(0).getDimension();
-		
+		**/
 	}
 	
 	public FrameSet(Array2DRowRealMatrix frameMatrix) {
@@ -119,7 +124,7 @@ public class FrameSet {
 			for(int j = i; j < addUntil; j++){
 				subset.add(source.get(j));
 			}
-			partitions.add(new FrameSet(subset, this.dimension));
+			partitions.add(new FrameSet(subset));
 		}
 		
 		return partitions;
