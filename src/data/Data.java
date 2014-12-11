@@ -248,6 +248,7 @@ public class Data {
 							Data data = Data.readCSV(file);
 							data.visualize(file.getName());
 						} catch (IOException e1) {
+							e1.printStackTrace();
 							JOptionPane.showMessageDialog(frame,e1.getMessage(),file.getName(),JOptionPane.ERROR_MESSAGE);
 						}
 					}
