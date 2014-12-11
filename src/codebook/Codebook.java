@@ -20,6 +20,19 @@ public class Codebook {
 	RealMatrix basisVectors;
 	double alpha;
 	
+	/**
+	 * Initializes a codebook with a certain dimension and size (number
+	 * of basis vectors).
+	 * 
+	 * After creating the codebook, call the learnUnlabeledData method
+	 * to start learning the basis vectors.
+	 * 
+	 * @param codebookDimension	The dimension of the basis vectors,
+	 * 							this corresponds to the frame size
+	 * 							of the data to be processed.
+	 * 
+	 * @param codebookSize		The cardinality of the basis.
+	 */
 	public Codebook(int codebookDimension, int codebookSize){
 		
 		basisVectors = new Array2DRowRealMatrix(codebookDimension, codebookSize);
@@ -56,6 +69,32 @@ public class Codebook {
 		}
 	}
 	
+	/**
+	 * Learns the codebook basis vectors using a frame set of unlabeled data.
+	 * 
+	 * @param unlabeledData		The unlabeled data to learn the codebook.
+	 * 
+	 * @param partitionStyle	Partition style to be used while learning the
+	 * 							codebook. Two possibilities:
+	 * 							"numberPartitions": Specify number of partitions.
+	 * 							"partitionSize": Specify size of partitions.
+	 * 
+	 * @param partitionOption	Partitioning option. Interpretation depends on
+	 * 							value of partitionStyle.
+	 * 
+	 * @param convergenceThreshold	The drop in the regularized reconstruction
+	 * 								error between two consecutive refinements
+	 * 								of the codebook needs to be smaller than
+	 * 								this threshold to imply convergence and
+	 * 								return the codebook.
+	 * 
+	 * @param alpha		The regularization parameter alpha controls the trade-off
+	 * 					between reconstruction quality and sparseness of the basis
+	 * 					vectors. Smaller values (close to zero) of alpha encourage
+	 * 					accuracy of basis vectors. Large values (close to one) of
+	 * 					alpha encourage sparse solutions, where the activations
+	 * 					have a smalll L1-norm.
+	 */
 	public void learnUnlabeledData(FrameSet unlabeledData, String partitionStyle, int partitionOption, double convergenceThreshold, double alpha){
 		double previousDistance = Double.MAX_VALUE;
 		this.alpha = alpha;
@@ -70,14 +109,14 @@ public class Codebook {
 			for(FrameSet batch : batches){
 				//Array2DRowRealMatrix activationForBatch = featureSignSearch(batch, alpha);
 				// Trying something different...
-				Array2DRowRealMatrix activationForBatch = l1ConstrainedLassoSolve(batch);
+				Array2DRowRealMatrix activationForBatch = l1RegularizedLassoSolve(batch);
 				improveWithLeastSquaresSolve(batch, activationForBatch);
 				for(int j = 0; j < batches.size(); j++){
 					activationVectors.setColumnVector(i, activationForBatch.getColumnVector(j));
 					i++;
 				}
 			}
-			double currentDistance = getLeastSquaresDistance(unlabeledData, activationVectors);
+			double currentDistance = getRegularizedReconstructionError(unlabeledData, activationVectors);
 			if(previousDistance - currentDistance < convergenceThreshold){
 				converged = true;
 			}else{
@@ -87,16 +126,26 @@ public class Codebook {
 		}
 	}
 	
+	
 	public Codebook getMostInformativeSubset(){
 		// TODO implement
 		return null;
 	}
 	
-	private double getLeastSquaresDistance(
-			FrameSet unlabeledData, Array2DRowRealMatrix activationVectors) {
+	/**
+	 * Calculates the regularized reconstruction error of the frame set and the
+	 * reconstruction by using the activation vectors as coefficient vectors for
+	 * the basis vectors currently in the codebook.
+	 * 
+	 * @param data	Measurements.
+	 * @param activationVectors	Coefficient vectors to reconstruct the measurements.
+	 * @return	Regularized reconstruction error.
+	 */
+	private double getRegularizedReconstructionError(
+			FrameSet data, Array2DRowRealMatrix activationVectors) {
 		
 		double accumulator = 0;
-		RealMatrix difference = unlabeledData.toMatrix().subtract(basisVectors.multiply(activationVectors));
+		RealMatrix difference = data.toMatrix().subtract(basisVectors.multiply(activationVectors));
 		
 		for(int columnIndex = 0; columnIndex < difference.getColumnDimension(); columnIndex++){
 			accumulator += Math.pow(difference.getColumnVector(columnIndex).getNorm(),2);
@@ -106,11 +155,33 @@ public class Codebook {
 		return accumulator;
 	}
 	
+	/**
+	 * Activates the frames of the supplied frame set with the current state of
+	 * the codebook. Returns the activations as another frameset.
+	 * 
+	 * If the data frame set has dimensions n by m, and the codebook has
+	 * dimensions n by s, the activation frame set will have dimensions 
+	 * m by n.
+	 * 
+	 * @param labeled	The data to be activated.
+	 * @return	The corresponding activation vectors.
+	 */
 	public FrameSet activate(FrameSet labeled) {
-		return new FrameSet(l1ConstrainedLassoSolve(labeled));
+		return new FrameSet(l1RegularizedLassoSolve(labeled));
 	}
 	
-	private Array2DRowRealMatrix l1ConstrainedLassoSolve(FrameSet batch){
+	/**
+	 * Solves the L1-Regularized least squares problem with coefficients weighted by
+	 * the static term alpha (codebook-wide variable).
+	 * 
+	 * The method accepts a batch of solution vectors and solves the system independently
+	 * for each. The current state of the codebook is used as the system to solve
+	 * against.
+	 * 
+	 * @param batch	Batch of frames to be used as solution vectors.
+	 * @return Matrix with the corresponding coefficient vectors.
+	 */
+	private Array2DRowRealMatrix l1RegularizedLassoSolve(FrameSet batch){
 		
 		PrintStream originalStream = System.out;
 
@@ -145,8 +216,40 @@ public class Codebook {
 		return activationMatrix;
 		
 	}
-
+	
 	/**
+	 * This method takesa batch of unlabeled data vectors and associated activations.
+	 * Keeping these activations static, it optimizes the codebook by solving the
+	 * L2-constrained least squares problem $||X - BA||_2^2$ for B, with X the data
+	 * matrix with column vectors for each frame, B the codebook with column vectors
+	 * being the basis vectors and A the matrix of activation vectors for X.
+	 * 
+	 * This is equivalent to solving the least squares problem $||X^T - A^TB^T||_2^2$
+	 * which is a format that can be used with most least squares solvers.
+	 * 
+	 * The codebook is updated with this least squares solution.
+	 *  
+	 * @param batch					The data vectors.
+	 * @param activationForBatch	Activation vectors corresponding to the data vectors.
+	 * @post  Codebook is updated with least squares solution.
+	 */
+	private void improveWithLeastSquaresSolve(FrameSet batch, Array2DRowRealMatrix activationForBatch){
+		// We solve the least squares problem
+		// transpose(batch) = transpose(activationForBatch) * transpose(codebook)
+		// for codebook and update codebook.
+		
+		//DecompositionSolver solver = new QRDecomposition(activationForBatch.transpose()).getSolver();
+		DecompositionSolver solver = new SingularValueDecomposition(activationForBatch.transpose()).getSolver();
+		basisVectors = solver.solve(batch.toMatrixTranspose()).transpose();
+	}
+	
+	/**
+	 * This is the code that was previously used to solve the L1-regularized least squares problem,
+	 * to optimize activation vectors for the unlabeled data while keeping the codebook static.
+	 * 
+	 * Alas, there are still a lot of errors in the code below and we've instead started using
+	 * a LASSO implementation by the SMILE machine learning library.
+	 * 
 	private Array2DRowRealMatrix featureSignSearch(FrameSet batch, double alpha){
 		// 2D0 check correctness
 		Array2DRowRealMatrix activationMatrix = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), batch.size());
@@ -323,14 +426,4 @@ public class Codebook {
 		
 	}
 		**/
-	
-	private void improveWithLeastSquaresSolve(FrameSet batch, Array2DRowRealMatrix activationForBatch){
-		// We solve the least squares problem
-		// transpose(batch) = transpose(activationForBatch) * transpose(codebook)
-		// for codebook and update codebook.
-		
-		//DecompositionSolver solver = new QRDecomposition(activationForBatch.transpose()).getSolver();
-		DecompositionSolver solver = new SingularValueDecomposition(activationForBatch.transpose()).getSolver();
-		basisVectors = solver.solve(batch.toMatrixTranspose()).transpose();
-	}
 }
