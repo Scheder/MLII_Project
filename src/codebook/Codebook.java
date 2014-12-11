@@ -2,18 +2,13 @@ package codebook;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.TreeSet;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.DecompositionSolver;
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 
 import smile.regression.LASSO;
@@ -112,8 +107,6 @@ public class Codebook {
 	private Array2DRowRealMatrix l1ConstrainedLassoSolve(FrameSet batch, double alpha){
 		
 		PrintStream originalStream = System.out;
-		
-		final PrintStream originalOut = System.out;
 
 		// To suppress LASSO prints...
 		PrintStream dummyStream    = new PrintStream(new OutputStream(){
@@ -149,7 +142,7 @@ public class Codebook {
 
 	/**
 	private Array2DRowRealMatrix featureSignSearch(FrameSet batch, double alpha){
-		// TODO check correctness
+		// 2D0 check correctness
 		Array2DRowRealMatrix activationMatrix = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), batch.size());
 		
 		// For each vector in batch,
@@ -230,7 +223,7 @@ public class Codebook {
 			
 			System.out.println(bSub.transpose().multiply(bSub));
 			
-			RealVector p2 = bSub.transpose().operate(y.subtract(t.mapMultiply(alpha/2))); // TODO check formula. PDF is ambiguous.
+			RealVector p2 = bSub.transpose().operate(y.subtract(t.mapMultiply(alpha/2))); // 2D0 check formula. PDF is ambiguous.
 			RealVector xSol = p1.operate(p2);
 			
 			// Perform a discrete line search on the closed line segment from xSub to xSol
@@ -302,7 +295,6 @@ public class Codebook {
 		return x;
 		
 	}
-	**/
 	
 	private double calculateFeatureSignObjective(RealVector y, RealMatrix a, RealVector x, RealVector t, double alpha){
 		
@@ -310,7 +302,7 @@ public class Codebook {
 		
 	}
 	
-	//TODO check correctness
+	//todo check correctness
 	private ArrayRealVector getDifferentialFor(RealVector solVector, RealVector variableVector){
 		RealVector temp = basisVectors.operate(variableVector);
 		ArrayRealVector lsDifferential = new ArrayRealVector(variableVector.getDimension());
@@ -324,6 +316,7 @@ public class Codebook {
 		return lsDifferential;
 		
 	}
+		**/
 	
 	private void improveWithLeastSquaresSolve(FrameSet batch, Array2DRowRealMatrix activationForBatch){
 		// We solve the least squares problem
