@@ -7,7 +7,10 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -50,7 +53,6 @@ public class Data {
 		this.instances = instances;
 	}
 	
-	//TODO deal with empty files... walk_20_other.csv, walk_51_wannes are empty...
 	public static Data readCSV (final String file) throws IOException {
 		return Data.readCSV(new File(file));
 	}
@@ -64,8 +66,8 @@ public class Data {
 		d.instances = loader.getDataSet();
 		
 		//Add magnitudes
-		Attribute magAttr = new Attribute("magnitude",d.instances.numAttributes());
-		d.instances.insertAttributeAt(magAttr,d.instances.numAttributes());
+		Attribute magAttr = new Attribute("magnitude",4);
+		d.instances.insertAttributeAt(magAttr,4);
 		
 		Instance instance;
 		Double x,y,z,mag;
@@ -75,7 +77,7 @@ public class Data {
 			y = instance.value(2);
 			z = instance.value(3);
 			mag = Math.sqrt(x*x + y*y + z*z);
-			instance.setValue(magAttr.index(), mag);
+			instance.setValue(4, mag);
 		}
 		
 		//Add class "walking". All instances are set to unknown.
@@ -86,7 +88,7 @@ public class Data {
 			walkingValues.addElement("Yes");
 			walkingValues.addElement("No");
 			walking = new Attribute("walking",walkingValues);
-			d.instances.insertAttributeAt(walking,d.instances.numAttributes());
+			d.instances.insertAttributeAt(walking,5);
 		}
 		
 		d.instances.setClass(walking);
@@ -143,6 +145,42 @@ public class Data {
 		
 		
 		return list;
+	}
+	
+	public List<String> getLabels() {
+		final int size = this.numOfWindows();
+		final List<String> labels = new ArrayList<String>(size);
+		final Attribute classAttr = this.instances.classAttribute();
+
+		//Iterate windows
+		for (int i = 0; i < size; i ++) {
+			//Prepare voting map
+			Map<String, Integer> votingMap = new HashMap<String, Integer>();
+			Enumeration<String> e = this.instances.classAttribute().enumerateValues();
+			while (e.hasMoreElements()) {
+				votingMap.put(e.nextElement(),0);
+			}
+			
+			Data window = this.getWindow(i);
+			//Get majority label
+			for (int j = 0; j < Data.windowSize; j++) {
+				String label = window.instances.instance(j).stringValue(classAttr);
+				int value = votingMap.get(label);
+				votingMap.put(label, value+1);
+			}
+			//Check the majority vote
+			String winnerLabel = "";
+			int winnerValue = 0;
+			for (String label : votingMap.keySet()) {
+				int value = votingMap.get(label);
+				if (value > winnerValue) {
+					winnerValue = value;
+					winnerLabel = label;
+				}
+			}
+			labels.add(winnerLabel);
+		}
+		return labels;
 	}
 	
 	@Override
@@ -269,17 +307,17 @@ public class Data {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Data d = Data.readCSV("Project/labeled_walking_train/walk_45_other.csv");
-//		Data d = Data.readCSV("Project/train/walk_1_other.csv");
-		System.out.println(d);
-		d.toArff("test.arff");
+//		Data d = Data.readCSV("Project/labeled_walking_train/walk_28_leander.csv");
+//		Data d = Data.readCSV("Project/labeled_walking_train/walk_45_other.csv");
+//		Data d1 = Data.readCSV("Project/train/walk_1_other.csv");
+//		d.toArff("test.arff");
 //		System.out.println(d);
 //		System.out.println(d.toArrayRealVector());
 //		d.visualize();
 //		for (int i = 0; i < d.numOfWindows(); i++) {
 //			System.out.println(d.getWindow(i));
 //		}
-//		Data.visualizeFile();
+		Data.visualizeFile();
 	}
 	
 }
