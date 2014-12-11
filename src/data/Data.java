@@ -13,7 +13,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.plaf.FileChooserUI;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.jfree.chart.ChartFactory;
@@ -50,6 +50,7 @@ public class Data {
 		this.instances = instances;
 	}
 	
+	//TODO deal with empty files... walk_20_other.csv, walk_51_wannes are empty...
 	public static Data readCSV (final String file) throws IOException {
 		return Data.readCSV(new File(file));
 	}
@@ -151,8 +152,12 @@ public class Data {
 	}
 	
 	public void visualize() {
-		ApplicationFrame frame = new ApplicationFrame("Data");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.visualize("");
+	}
+	
+	public void visualize(final String title) {
+		JFrame frame = new JFrame(title);
+		frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		frame.setLayout(new GridLayout(2,2));
 		
 		//Define the data series
@@ -228,18 +233,23 @@ public class Data {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setMultiSelectionEnabled(true);
+				FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV files", "CSV");
+				fileChooser.setFileFilter(filter);
 				fileChooser.setCurrentDirectory(currentDirectory);
 				int result = fileChooser.showOpenDialog(frame);
 				
 				if (result == JFileChooser.APPROVE_OPTION) {
 					currentDirectory = fileChooser.getCurrentDirectory();
-					Data data;
-					try {
-						data = Data.readCSV(fileChooser.getSelectedFile());
-						data.visualize();
-					} catch (IOException e1) {
-						JOptionPane.showMessageDialog(frame, e1.getMessage());
-						e1.printStackTrace();
+					File[] files = fileChooser.getSelectedFiles();
+					for (File file : files) {
+						System.out.println("Visualizing: " + file.getName() + "...");
+						try {
+							Data data = Data.readCSV(file);
+							data.visualize(file.getName());
+						} catch (IOException e1) {
+							JOptionPane.showMessageDialog(frame,e1.getMessage(),file.getName(),JOptionPane.ERROR_MESSAGE);
+						}
 					}
 				}
 			}
