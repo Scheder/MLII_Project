@@ -18,4 +18,8 @@ public class LabeledFrameSet extends FrameSet {
 	public String getLabel(int frameIndex){
 		return this.labels.get(frameIndex);
 	}
+	
+	public List<String> getLabelList(){
+		return new ArrayList<String>(labels);
+	}
 }

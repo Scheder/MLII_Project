@@ -12,6 +12,10 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 
 import smile.regression.LASSO;
+import weka.core.Attribute;
+import weka.core.FastVector;
+import weka.core.Instance;
+import weka.core.Instances;
 import data.FrameSet;
 
 
@@ -129,6 +133,33 @@ public class Codebook {
 	
 	public Codebook getMostInformativeSubset(){
 		// TODO implement
+		
+		//Create attributes for all basic vector components.
+		FastVector attributes = new FastVector(basisVectors.getRowDimension());
+		
+		for(int i = 0; i < basisVectors.getRowDimension(); i++) {
+			attributes.addElement(new Attribute(""+i));
+		}
+		
+		// Instantiate instances object.
+		Instances  instances = new Instances("BVect", attributes, basisVectors.getColumnDimension());
+		
+		// Populate with instances of basis vectors.
+		for(int i = 0; i < basisVectors.getColumnDimension(); i++){
+			double[] attValues = basisVectors.getColumn(i);
+			Instance instance = new Instance(1, attValues);
+			instances.add(instance);
+		}
+		
+		// Make cluster.
+		String[] options = new String[2];
+		options[0] = "-N";                 // max. iterations
+		options[1] = "100";
+		
+		
+		
+		
+		
 		return null;
 	}
 	

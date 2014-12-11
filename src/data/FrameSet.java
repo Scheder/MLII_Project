@@ -38,6 +38,10 @@ public class FrameSet {
 		**/
 	}
 	
+	public LabeledFrameSet labelFrameSet(Collection<String> labels){
+		return new LabeledFrameSet(frameSet, labels);
+	}
+	
 	public FrameSet(Array2DRowRealMatrix frameMatrix) {
 		this.size = frameMatrix.getColumnDimension();
 		this.dimension = frameMatrix.getRowDimension();
