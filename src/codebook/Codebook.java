@@ -1,5 +1,7 @@
 package codebook;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -12,7 +14,9 @@ import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 
+import smile.regression.LASSO;
 import data.FrameSet;
 
 
@@ -67,7 +71,9 @@ public class Codebook {
 			Array2DRowRealMatrix activationVectors = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), unlabeledData.size());
 			int i = 0;
 			for(FrameSet batch : batches){
-				Array2DRowRealMatrix activationForBatch = featureSignSearch(batch, alpha);
+				//Array2DRowRealMatrix activationForBatch = featureSignSearch(batch, alpha);
+				// Trying something different...
+				Array2DRowRealMatrix activationForBatch = l1ConstrainedLassoSolve(batch, alpha);
 				improveWithLeastSquaresSolve(batch, activationForBatch);
 				for(int j = 0; j < batches.size(); j++){
 					activationVectors.setColumnVector(i, activationForBatch.getColumnVector(j));
@@ -102,7 +108,46 @@ public class Codebook {
 		
 		return accumulator;
 	}
+	
+	private Array2DRowRealMatrix l1ConstrainedLassoSolve(FrameSet batch, double alpha){
+		
+		PrintStream originalStream = System.out;
+		
+		final PrintStream originalOut = System.out;
 
+		// To suppress LASSO prints...
+		PrintStream dummyStream    = new PrintStream(new OutputStream(){
+		    public void write(int b) {
+		        //NO-OP
+		    }
+		});
+		
+		
+		Array2DRowRealMatrix activationMatrix = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), batch.size());
+		int bb = 0;
+		int aa = 0;
+		int cc = 0;
+		// For each vector in batch.
+		for(int i = 0; i < batch.size(); i++){
+			double[] y = batch.getFrame(i).toArray();
+			double[][] beta = basisVectors.getData();
+			System.setOut(dummyStream);
+			LASSO solver = new LASSO(beta, y, alpha);
+			System.setOut(originalStream);
+			double[] a = solver.coefficients();
+			activationMatrix.setColumn(i, a);
+			bb = a.length;
+			aa = beta.length;
+			cc = beta[0].length;
+		}
+		System.out.println(aa);
+		System.out.println(cc);
+		System.out.println(bb);
+		return activationMatrix;
+		
+	}
+
+	/**
 	private Array2DRowRealMatrix featureSignSearch(FrameSet batch, double alpha){
 		// TODO check correctness
 		Array2DRowRealMatrix activationMatrix = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), batch.size());
@@ -129,10 +174,12 @@ public class Codebook {
 		boolean skipActivation = false;
 		
 		while(!optimal){
+			ArrayRealVector diffie;
 			if(!skipActivation){
 				// From zero coefficients of x, select i = argmax_i(abs(differential_xi))
 				// - generate differentials
 				ArrayRealVector diffVector = getDifferentialFor(y, x);
+				diffie = diffVector.copy();
 				// - populate array with norms of values corresponding to nonzero xs.
 				ArrayRealVector candidateVector = new ArrayRealVector(diffVector.getDimension());
 				for(int i = 0; i < diffVector.getDimension(); i++){
@@ -143,7 +190,7 @@ public class Codebook {
 				
 				// Add next best element to active set.
 				boolean lookingForCandidate = true;
-				while(!lookingForCandidate){
+				while(lookingForCandidate){
 					// Find index with max value in candidate vector.
 					int candidateIndex = candidateVector.getMaxIndex();
 					// Test if candidate locally improves the objective.
@@ -178,10 +225,12 @@ public class Codebook {
 				tSub.setEntry(i, t.getEntry(index));
 				i++;
 			}
-			
 			// Compute the analytical solution to the resulting analytical QP:
 			RealMatrix p1 = new LUDecomposition(bSub.transpose().multiply(bSub)).getSolver().getInverse();
-			RealVector p2 = bSub.transpose().operate(y.subtract(t.mapDivide(2))); // TODO check formula. PDF is ambiguous.
+			
+			System.out.println(bSub.transpose().multiply(bSub));
+			
+			RealVector p2 = bSub.transpose().operate(y.subtract(t.mapMultiply(alpha/2))); // TODO check formula. PDF is ambiguous.
 			RealVector xSol = p1.operate(p2);
 			
 			// Perform a discrete line search on the closed line segment from xSub to xSol
@@ -194,7 +243,7 @@ public class Codebook {
 			//   for each coefficient of the sub-vector x.
 			for(int index = 0; index < xSub.getDimension(); index++){
 				//   if the coefficient sign changed between xSub and xSol...
-				if(Math.signum(xSub.getEntry(index)*xSol.getEntry(index)) < 0){
+				if(Math.signum(xSub.getEntry(index)*xSol.getEntry(index)) <= 0){
 					//   find the point where it changed...
 					double lamda = xSol.getEntry(index)/(xSol.getEntry(index) - xSub.getEntry(index));
 					RealVector temp = xSub.mapMultiply(lamda).add(xSol.mapMultiply(1-lamda));
@@ -207,6 +256,8 @@ public class Codebook {
 					}
 				}
 			}
+			
+			System.out.println(xRes);
 			
 			// Update corresponding values of x.
 			i = 0;
@@ -225,16 +276,15 @@ public class Codebook {
 			activeSet.removeAll(removeList);
 			
 			// Update t
-			for(int ind = 0; ind < t.getDimension(); i++){
+			for(int ind = 0; ind < t.getDimension(); ind++){
 				t.setEntry(ind, Math.signum(x.getEntry(ind)));
 			}
 			
 			// Check the optimality conditions
 			optimal = true;
 			ArrayRealVector diff = getDifferentialFor(y,x);
-			ArrayRealVector diffAdd = new ArrayRealVector(diff.getDimension());
+			RealVector diffAdd = t.copy().mapMultiply(alpha);
 		out:for(int ind = 0; ind < x.getDimension(); ind++){
-				diffAdd.setEntry(ind, alpha*Math.signum(x.getEntry(ind)));
 				if(x.getEntry(ind) !=0){
 					if(diff.getEntry(ind) + diffAdd.getEntry(ind) != 0){
 						optimal = false;
@@ -252,6 +302,7 @@ public class Codebook {
 		return x;
 		
 	}
+	**/
 	
 	private double calculateFeatureSignObjective(RealVector y, RealMatrix a, RealVector x, RealVector t, double alpha){
 		
@@ -279,7 +330,8 @@ public class Codebook {
 		// transpose(batch) = transpose(activationForBatch) * transpose(codebook)
 		// for codebook and update codebook.
 		
-		DecompositionSolver solver = new QRDecomposition(activationForBatch.transpose()).getSolver();
+		//DecompositionSolver solver = new QRDecomposition(activationForBatch.transpose()).getSolver();
+		DecompositionSolver solver = new SingularValueDecomposition(activationForBatch.transpose()).getSolver();
 		basisVectors = solver.solve(batch.toMatrixTranspose()).transpose();
 	}
 }

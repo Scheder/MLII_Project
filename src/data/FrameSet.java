@@ -11,21 +11,24 @@ import org.apache.commons.math3.linear.RealVector;
 
 public class FrameSet {
 	
-	private final ArrayList<ArrayRealVector> frameSet;
+	private final List<ArrayRealVector> frameSet;
 	private final int size;
 	private final int dimension;
 	
-	public FrameSet(Collection<RealVector> frameSet){
+	public FrameSet(Collection<ArrayRealVector> frameSet, int windowSize){
 		
-		this.size = frameSet.size();
-		this.frameSet = new ArrayList<ArrayRealVector>(this.size);
+		List<ArrayRealVector> newFrameSet = new ArrayList<ArrayRealVector>();
 		
 		for(RealVector frame : frameSet){
 			
-			this.frameSet.add(new ArrayRealVector(frame));
-			
+			// Ignore incomplete frames.
+			if(frame.getDimension() == windowSize){
+				newFrameSet.add(new ArrayRealVector(frame));
+			}
 		}
 		
+		this.frameSet = newFrameSet;
+		this.size = this.frameSet.size();
 		this.dimension = this.frameSet.get(0).getDimension();
 		
 	}
@@ -63,6 +66,8 @@ public class FrameSet {
 	}
 	
 	public ArrayList<FrameSet> partition(String partitionType, int partitionOption){
+		System.out.println("Partitioning.");
+		
 		// Generate set number of partitions.
 		
 		int itemsPerPartition = 0;
@@ -84,24 +89,26 @@ public class FrameSet {
 				itemsPerPartition = this.size;
 				numberOfPartitions = 1;
 			}else{
-				numberOfPartitions = (int) Math.ceil((double)5/4);
+				numberOfPartitions = (int) Math.ceil((double) this.size / partitionOption);
 				itemsPerPartition = partitionOption;
 			}
 			
 		}else{
 			throw new IllegalArgumentException("partitionType can only equal 'numberPartitions' or 'partitionSize'.");
 		}
+		System.out.println(itemsPerPartition);
+		System.out.println(numberOfPartitions);
 			
 		ArrayList<FrameSet> partitions = new ArrayList<FrameSet>(numberOfPartitions);
 		List<ArrayRealVector> source = permuteList(frameSet);
 		
 		for(int i = 0; i < numberOfPartitions; i++){
-			ArrayList<RealVector> subset = new ArrayList<RealVector>();
+			ArrayList<ArrayRealVector> subset = new ArrayList<ArrayRealVector>();
 			int addUntil = Math.min(i+itemsPerPartition, this.size);
 			for(int j = i; j < addUntil; j++){
 				subset.add(source.get(j));
 			}
-			partitions.add(new FrameSet(subset));
+			partitions.add(new FrameSet(subset, this.dimension));
 		}
 		
 		return partitions;
@@ -114,10 +121,9 @@ public class FrameSet {
 		Random generator = new Random();
 		
 		while(start.size() > 0){
-			int index = generator.nextInt() % start.size();
+			int index = Math.abs(generator.nextInt()) % start.size();
 			res.add(start.remove(index));
 		}
-		
 		return res;
 		
 	}
