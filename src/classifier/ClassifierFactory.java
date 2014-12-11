@@ -14,11 +14,12 @@ import weka.core.Instances;
 import codebook.Codebook;
 import codebook.CodebookFactory;
 import data.FrameSet;
+import data.LabeledFrameSet;
 
 public class ClassifierFactory {
 	
 	//TODO handle exception
-	public static void createClassifier(FrameSet labeled, FrameSet unlabeled) throws Exception{
+	public static void createClassifier(LabeledFrameSet labeled, FrameSet unlabeled) throws Exception{
 		
 		// Fast code book learning.
 		// TODO: choose values, or make value picker.
