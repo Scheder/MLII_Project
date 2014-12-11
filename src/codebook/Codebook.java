@@ -234,8 +234,10 @@ public class Codebook implements Serializable {
         LinkedList<RealVector> newBasisVectors = new LinkedList<RealVector>();
         for(int i = 0; i < Math.ceil((double) numVects/10); i++){
         	
+        	ArrayList<RealVector> currList = res.get(i);
+        	
         	// Sort.
-        	Collections.sort(res.get(i), new java.util.Comparator<RealVector>() {
+        	Collections.sort(currList, new java.util.Comparator<RealVector>() {
         	    public int compare(RealVector a, RealVector b) {
         	        double shanA = empiricalEntropy(a, 10);
         	        double shanB = empiricalEntropy(a, 10);
@@ -244,12 +246,14 @@ public class Codebook implements Serializable {
         	});
         	
         	// Select most relevant 90%.
-        	int itemsToSelect = (int) Math.ceil((double) res.size()/0.9);
+        	int itemsToSelect = (int) Math.min(Math.ceil((double) currList.size()*0.9), currList.size());
         	for(int j = 0; j < itemsToSelect; j++){
-        		newBasisVectors.add(res.get(i).get(j));
+        		newBasisVectors.add(currList.get(j));
         	}
         	
         }
+        
+        System.out.println(newBasisVectors.size());
         
         // Return better codebook.
         return new Codebook(newBasisVectors, this.alpha);
@@ -258,6 +262,7 @@ public class Codebook implements Serializable {
 	public double empiricalEntropy(RealVector v, int numBuckets){
 		
 		double max = v.getMaxValue();
+		System.out.println(max);
 		double min = v.getMinValue();
 		RealVector normalizedV = v.mapSubtract(min).mapDivide(max-min);
 		
@@ -275,7 +280,7 @@ public class Codebook implements Serializable {
 		int count = v.getDimension();
 		
 		for(double el : buckets){
-			entropy -= (el/count)*Math.log2(el);
+			entropy -= (el/count)*Math.log2(el/count);
 		}
 		
 		return entropy;
@@ -343,9 +348,7 @@ public class Codebook implements Serializable {
 		
 		
 		Array2DRowRealMatrix activationMatrix = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), batch.size());
-		int bb = 0;
-		int aa = 0;
-		int cc = 0;
+
 		// For each vector in batch.
 		for(int i = 0; i < batch.size(); i++){
 			double[] y = batch.getFrame(i).toArray();
@@ -355,9 +358,7 @@ public class Codebook implements Serializable {
 			System.setOut(originalStream);
 			double[] a = solver.coefficients();
 			activationMatrix.setColumn(i, a);
-			bb = a.length;
-			aa = beta.length;
-			cc = beta[0].length;
+
 		}
 		//System.out.println(aa);
 		//System.out.println(cc);
