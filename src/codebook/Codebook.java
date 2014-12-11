@@ -235,12 +235,12 @@ public class Codebook implements Serializable {
         for(int i = 0; i < Math.ceil((double) numVects/10); i++){
         	
         	ArrayList<RealVector> currList = res.get(i);
-        	
+        	System.out.println();
         	// Sort.
         	Collections.sort(currList, new java.util.Comparator<RealVector>() {
         	    public int compare(RealVector a, RealVector b) {
         	        double shanA = empiricalEntropy(a, 10);
-        	        double shanB = empiricalEntropy(a, 10);
+        	        double shanB = empiricalEntropy(b, 10);
         	        return Double.compare(shanB, shanA);
         	    }
         	});
@@ -249,6 +249,7 @@ public class Codebook implements Serializable {
         	int itemsToSelect = (int) Math.min(Math.ceil((double) currList.size()*0.9), currList.size());
         	for(int j = 0; j < itemsToSelect; j++){
         		newBasisVectors.add(currList.get(j));
+        		System.out.println(empiricalEntropy(currList.get(j), 10));
         	}
         	
         }
@@ -262,7 +263,7 @@ public class Codebook implements Serializable {
 	public double empiricalEntropy(RealVector v, int numBuckets){
 		
 		double max = v.getMaxValue();
-		System.out.println(max);
+		//System.out.println(max);
 		double min = v.getMinValue();
 		RealVector normalizedV = v.mapSubtract(min).mapDivide(max-min);
 		
@@ -277,10 +278,12 @@ public class Codebook implements Serializable {
 		}
 		
 		double entropy = 0;
-		int count = v.getDimension();
+		double count = v.getDimension();
 		
 		for(double el : buckets){
-			entropy -= (el/count)*Math.log2(el/count);
+			if(el > 0.0){
+				entropy -= (el/count)*Math.log2(el/count);
+			}
 		}
 		
 		return entropy;
