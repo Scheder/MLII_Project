@@ -2,6 +2,7 @@ package codebook;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
 
@@ -20,8 +21,9 @@ import weka.core.Instances;
 import data.FrameSet;
 
 
-public class Codebook {
+public class Codebook implements Serializable {
 
+	private static final long serialVersionUID = 1L;
 	RealMatrix basisVectors;
 	double alpha;
 	

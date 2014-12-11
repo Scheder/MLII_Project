@@ -27,12 +27,17 @@ public class Main {
 	
 	//TODO pretty print exception
 	public static void main(String[] args) throws Exception {
+		long start = System.nanoTime();
+		
 		//First read all unlabeled train data in memory
 		FrameSet unlabeled = Main.getFrameSet("Project/train");
 		//Second read all labeled train data in memory
 		LabeledFrameSet labeled = Main.getLabeledFrameSet("Project/labeled_walking_train");
 		
 		Classifier classifier = ClassifierFactory.createClassifier(labeled, unlabeled);
+		
+		double elapsedTimeInSec = (System.nanoTime() - start) * 1e-9;
+		System.out.println("Finished after " + elapsedTimeInSec + " seconds.");
 	}
 	
 	private static FrameSet getFrameSet(final String folder) {
