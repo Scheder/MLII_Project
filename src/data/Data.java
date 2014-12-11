@@ -307,17 +307,17 @@ public class Data {
 	}
 	
 	public static void main(String[] args) throws IOException {
-//		Data d = Data.readCSV("Project/labeled_walking_train/walk_28_leander.csv");
+		Data d = Data.readCSV("Project/labeled_walking_train/walk_28_leander.csv");
 //		Data d = Data.readCSV("Project/labeled_walking_train/walk_45_other.csv");
 //		Data d1 = Data.readCSV("Project/train/walk_1_other.csv");
-//		d.toArff("test.arff");
+		d.toArff("test.arff");
 //		System.out.println(d);
 //		System.out.println(d.toArrayRealVector());
 //		d.visualize();
 //		for (int i = 0; i < d.numOfWindows(); i++) {
 //			System.out.println(d.getWindow(i));
 //		}
-		Data.visualizeFile();
+//		Data.visualizeFile();
 	}
 	
 }

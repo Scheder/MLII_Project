@@ -33,7 +33,6 @@ public class Main {
 		LabeledFrameSet labeled = Main.getLabeledFrameSet("Project/labeled_walking_train");
 		
 		Classifier classifier = ClassifierFactory.createClassifier(labeled, unlabeled);
-		
 	}
 	
 	private static FrameSet getFrameSet(final String folder) {
