@@ -18,8 +18,7 @@ import data.LabeledFrameSet;
 
 public class ClassifierFactory {
 	
-	//TODO handle exception
-	public static void createClassifier(LabeledFrameSet labeled, FrameSet unlabeled) throws Exception{
+	public static Classifier createClassifier(LabeledFrameSet labeled, FrameSet unlabeled) throws Exception{
 		
 		// Fast code book learning.
 		// TODO: choose values, or make value picker.
@@ -38,27 +37,10 @@ public class ClassifierFactory {
 		// add to classifier with labeled vector
 		
 		FrameSet activations = codebook.activate(labeled);
+		LabeledFrameSet labeledActivations = activations.labelFrameSet(labeled.getLabelList());
 		
 		// C = train classifier
-		int numOfFrames = activations.size();
-		int numOfBasicVectors = activations.dimension();
-		FastVector attributes = new FastVector(numOfBasicVectors);
-		//Create attributes for all basic vectors
-		for (int i = 0; i < numOfBasicVectors; i++) {
-			attributes.addElement(new Attribute(""+i));
-		}
-		//TODO make createClassifier more generic, so it can be reused for gait recognition
-		attributes.addElement("walking");
-		
-		//Create training set
-		Instances trainingSet = new Instances("Rel",attributes,numOfFrames);
-		trainingSet.setClassIndex(numOfBasicVectors);
-		for (int i = 0; i < numOfFrames; i++) {
-			//TODO get label.
-			double[] attValues = activations.getFrame(i).toArray();
-			Instance instance = new Instance(1, attValues);
-			trainingSet.add(instance);
-		}
+		Instances trainSet = ClassifierFactory.activationsToInstances(labeledActivations, "walking");
 		
 		
 		//Create array of classifiers
@@ -74,12 +56,35 @@ public class ClassifierFactory {
 		Vote vote = new Vote();
 		vote.setClassifiers((Classifier[])classifiers.toArray());
 		
-		vote.buildClassifier(trainingSet);
-		// return return vote.
+		vote.buildClassifier(trainSet);
+		return vote;
 	}
 	
 	public static void testClassifier(Classifier classifier, FrameSet testSet) {
 		//Transform FrameSet to Instances
 		//TODO get statistics, confusion matrix etc.
+	}
+	
+	public static Instances activationsToInstances(LabeledFrameSet activations,String className) {
+		int numOfFrames = activations.size();
+		int numOfBasicVectors = activations.dimension();
+		FastVector attributes = new FastVector(numOfBasicVectors);
+		
+		//Create attributes for all basic vectors
+		for (int i = 0; i < numOfBasicVectors; i++) {
+			attributes.addElement(new Attribute(""+i));
+		}
+		attributes.addElement(className);
+		
+		//Create training set
+		Instances instances = new Instances("Rel",attributes,numOfFrames);
+		instances.setClassIndex(numOfBasicVectors);
+		for (int i = 0; i < numOfFrames; i++) {
+			double[] attValues = activations.getFrame(i).toArray();
+			Instance instance = new Instance(1, attValues);
+			instances.add(instance);
+		}
+		
+		return instances;
 	}
 }
