@@ -38,6 +38,8 @@ public class ClassifierFactory {
 		
 		codebook.getMostInformativeSubset();
 		
+		codebook.getMostInformativeSubset();
+		
 		// Initialize feature set.
 		// for each vector in labeled dataset
 		// minimize activation vectors
