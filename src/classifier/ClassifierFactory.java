@@ -22,11 +22,12 @@ public class ClassifierFactory {
 		
 		// Fast code book learning.
 		// TODO: choose values, or make value picker.
-		String partitionStyle = "";
-		int partitionOption = 0;
-		double convergenceThreshold = 0;
-		double alpha = 0;
-		Codebook codebook = CodebookFactory.newCodebook(unlabeled, partitionStyle, partitionOption, convergenceThreshold, alpha);
+		String partitionStyle = "partitionSize";
+		int partitionOption = 50;
+		double convergenceThreshold = 0.5;
+		double alpha = 0.5;
+		int basisSize = 256;
+		Codebook codebook = CodebookFactory.newCodebook(unlabeled, partitionStyle, partitionOption, basisSize, convergenceThreshold, alpha);
 		
 		// Initialize optimal code book.
 		//Codebook codebook = initCodebook.getMostInformative();

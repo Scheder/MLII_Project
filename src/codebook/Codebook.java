@@ -108,19 +108,26 @@ public class Codebook {
 		
 		while(!converged){
 			batches = unlabeledData.partition(partitionStyle, partitionOption);
-			Array2DRowRealMatrix activationVectors = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), unlabeledData.size());
-			int i = 0;
+			/**
+			 * Array2DRowRealMatrix activationVectors = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), unlabeledData.size());
+			 */
+			//int i = 0;
 			for(FrameSet batch : batches){
+				System.out.println("try batch");
 				//Array2DRowRealMatrix activationForBatch = featureSignSearch(batch, alpha);
 				// Trying something different...
 				Array2DRowRealMatrix activationForBatch = l1RegularizedLassoSolve(batch);
 				improveWithLeastSquaresSolve(batch, activationForBatch);
-				for(int j = 0; j < batches.size(); j++){
+				/**for(int j = 0; j < batches.size(); j++){
 					activationVectors.setColumnVector(i, activationForBatch.getColumnVector(j));
 					i++;
-				}
+				}**/
 			}
-			double currentDistance = getRegularizedReconstructionError(unlabeledData, activationVectors);
+			
+			FrameSet activations = activate(unlabeledData);
+			double currentDistance = getRegularizedReconstructionError(unlabeledData, activations);
+			
+			System.out.println("Current distance = " + currentDistance);
 			if(previousDistance - currentDistance < convergenceThreshold){
 				converged = true;
 			}else{
@@ -174,14 +181,14 @@ public class Codebook {
 	 * @return	Regularized reconstruction error.
 	 */
 	private double getRegularizedReconstructionError(
-			FrameSet data, Array2DRowRealMatrix activationVectors) {
+			FrameSet data, FrameSet activationVectors) {
 		
 		double accumulator = 0;
-		RealMatrix difference = data.toMatrix().subtract(basisVectors.multiply(activationVectors));
+		RealMatrix difference = data.toMatrix().subtract(basisVectors.multiply(activationVectors.toMatrix()));
 		
 		for(int columnIndex = 0; columnIndex < difference.getColumnDimension(); columnIndex++){
 			accumulator += Math.pow(difference.getColumnVector(columnIndex).getNorm(),2);
-			accumulator += alpha*activationVectors.getColumnVector(0).getL1Norm();
+			accumulator += alpha*activationVectors.getFrame(0).getL1Norm();
 		}
 		
 		return accumulator;
@@ -242,9 +249,9 @@ public class Codebook {
 			aa = beta.length;
 			cc = beta[0].length;
 		}
-		System.out.println(aa);
-		System.out.println(cc);
-		System.out.println(bb);
+		//System.out.println(aa);
+		//System.out.println(cc);
+		//System.out.println(bb);
 		return activationMatrix;
 		
 	}
