@@ -8,8 +8,8 @@ import java.util.List;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
-import weka.classifiers.Classifier;
 import classifier.ClassifierFactory;
+import classifier.CodebookClassifier;
 import data.Data;
 import data.FrameSet;
 import data.LabeledFrameSet;
@@ -32,9 +32,11 @@ public class Main {
 		//First read all unlabeled train data in memory
 		FrameSet unlabeled = Main.getFrameSet("Project/train");
 		//Second read all labeled train data in memory
-		LabeledFrameSet labeled = Main.getLabeledFrameSet("Project/labeled_walking_train");
+		LabeledFrameSet labeled = Main.getLabeledFrameSet("Project/labeled_train");
 		
-		Classifier classifier = ClassifierFactory.createClassifier(labeled, unlabeled);
+		CodebookClassifier classifier = ClassifierFactory.createWalkClassifier(labeled, unlabeled);
+		
+		Main.writeFilteredData(classifier);
 		
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1e-9;
 		System.out.println("Finished after " + elapsedTimeInSec + " seconds.");
@@ -72,9 +74,25 @@ public class Main {
 				labels.addAll(d.getLabels());
 			} catch (IOException e) {
 				//Continue to the next file with empty files
+				continue;
 			}
 		}
 		return new LabeledFrameSet(frames, labels);
+	}
+	
+	private static void writeFilteredData(CodebookClassifier classifier) throws Exception {
+		File folder = new File("Project/train");
+		for (File file : folder.listFiles(new Main.CSVFilter())) {
+			Data d;
+			try {
+				d = Data.readCSV(file);
+			} catch (IOException e) {
+				//Continue to the next file with empty files
+				continue;
+			}
+			List<String> labels = classifier.getLabels(d);
+			d.writeWalkData(labels);
+		}
 	}
 	
 }

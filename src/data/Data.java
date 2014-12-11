@@ -34,6 +34,7 @@ import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.CSVLoader;
+import weka.core.converters.CSVSaver;
 
 public class Data {
 	
@@ -44,13 +45,28 @@ public class Data {
 	private static final int instancesBetweenWindows = ((Double)((1-Data.overlap) * Data.windowSize)).intValue();
 	
 	private Instances instances;
+	private File file;
+	private String className;
+	private FastVector classValues;
 	
 	private Data() {
-		this.instances = null;
+		this(null);
 	}
 	
 	private Data(Instances instances) {
 		this.instances = instances;
+		this.className = "walking";
+		this.classValues = new FastVector(2);
+		this.classValues.addElement("Yes");
+		this.classValues.addElement("No");
+	}
+	
+	public String getClassName() {
+		return this.className;
+	}
+	
+	public FastVector getClassValues() {
+		return this.classValues;
 	}
 	
 	public static Data readCSV (final String file) throws IOException {
@@ -59,6 +75,7 @@ public class Data {
 	
 	public static Data readCSV (final File file) throws IOException {
 		Data d = new Data();
+		d.file = file;
 		
 		//Read CSV file with t,x,y and z data
 		CSVLoader loader = new CSVLoader();
@@ -80,20 +97,44 @@ public class Data {
 			instance.setValue(4, mag);
 		}
 		
-		//Add class "walking". All instances are set to unknown.
+		//Add class. All instances are set to unknown.
 		//Only add if it wasn't there already
-		Attribute walking = d.instances.attribute("walking");
-		if (walking == null) {
-			final FastVector walkingValues = new FastVector(2);
-			walkingValues.addElement("Yes");
-			walkingValues.addElement("No");
-			walking = new Attribute("walking",walkingValues);
-			d.instances.insertAttributeAt(walking,5);
+		Attribute classAttr = d.instances.attribute(d.className);
+		if (classAttr == null) {
+			classAttr = new Attribute(d.className,d.classValues,5);
+			d.instances.insertAttributeAt(classAttr,5);
 		}
 		
-		d.instances.setClass(walking);
+		d.instances.setClass(classAttr);
 		
 		return d;
+	}
+	
+	public void writeWalkData(final List<String> labels) throws IOException {
+		if (this.numOfWindows() == 0) return;
+		
+		Instances writeInstances = new Instances(this.instances,this.instances.numInstances());
+		for (int i = 0; i < this.numOfWindows(); i++) {
+			Data window = this.getWindow(i);
+			String label = labels.get(i);
+			
+			//No need to add non-walking frames
+			if ("No".equals(label)) continue;
+			
+			for (int j = 0; j < window.instances.numInstances(); j++) {
+				Instance instance = window.instances.instance(j);
+				writeInstances.add(instance);
+			}
+		}
+		int classIndex = writeInstances.classIndex();
+		writeInstances.setClassIndex(-1);
+		writeInstances.deleteAttributeAt(classIndex);
+		
+		File outputFile = new File("Project/filtered_train/filtered_"+this.file.getName());
+		CSVSaver saver = new CSVSaver();
+		saver.setInstances(writeInstances);
+		saver.setFile(outputFile);
+		saver.writeBatch();
 	}
 	
 	public void toArff(final String file) throws IOException {
@@ -195,7 +236,7 @@ public class Data {
 	}
 	
 	public void visualize() {
-		this.visualize("");
+		this.visualize(this.file.getName());
 	}
 	
 	public void visualize(final String title) {
@@ -307,7 +348,11 @@ public class Data {
 	}
 	
 	public static void main(String[] args) throws IOException {
-		Data d = Data.readCSV("Project/labeled_walking_train/walk_28_leander.csv");
+		Data d = Data.readCSV("Project/train/walk_1_other.csv");
+		CSVSaver s = new CSVSaver();
+		s.setFile(new File("test"));
+		s.setInstances(d.instances);
+		s.writeBatch();
 //		Data d = Data.readCSV("Project/labeled_walking_train/walk_45_other.csv");
 //		Data d1 = Data.readCSV("Project/train/walk_1_other.csv");
 		d.toArff("test.arff");

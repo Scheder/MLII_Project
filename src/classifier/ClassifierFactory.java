@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import org.apache.commons.math3.linear.ArrayRealVector;
 
 import weka.classifiers.Classifier;
-import weka.classifiers.mi.MISVM;
+import weka.classifiers.functions.SMO;
 import weka.classifiers.trees.J48;
 import weka.core.Attribute;
 import weka.core.FastVector;
@@ -30,11 +30,13 @@ import data.LabeledFrameSet;
 
 public class ClassifierFactory {
 	
-	public static Classifier createClassifier(LabeledFrameSet labeled, FrameSet unlabeled) throws Exception{
+	public static CodebookClassifier createWalkClassifier(LabeledFrameSet labeled, FrameSet unlabeled) throws Exception{
 		
 		Codebook codebook = ClassifierFactory.getCodebook(unlabeled);
 		// Initialize optimal code book.
 		//Codebook codebook = initCodebook.getMostInformative();
+		
+		codebook.getMostInformativeSubset();
 		
 		// Initialize feature set.
 		// for each vector in labeled dataset
@@ -55,7 +57,7 @@ public class ClassifierFactory {
 		//Create array of classifiers
 		//TODO use options for classifiers and add classifiers
 		Classifier[] classifiers = new Classifier[2];
-		Classifier svm = new MISVM();
+		Classifier smo = new SMO();
 		Classifier j48 = new J48();
 		
 //		classifiers[0] = svm;
@@ -68,8 +70,10 @@ public class ClassifierFactory {
 //		vote.buildClassifier(trainSet);
 //		return vote;
 		//TODO use meta classifier. vote can not work with numeric attribute
-		j48.buildClassifier(trainSet);
-		return j48;
+		smo.buildClassifier(trainSet);
+		
+		Classifier classifier = smo;
+		return new CodebookClassifier(codebook, classifier);
 	}
 	
 	public static void testClassifier(Classifier classifier, FrameSet testSet) {
@@ -96,6 +100,7 @@ public class ClassifierFactory {
 		 */
 		int subsetSize = 500;
 		basisSize = 64;
+		convergenceThreshold = 0.02;
 		ArrayList<ArrayRealVector> subset = new ArrayList<ArrayRealVector>(subsetSize);
 		for(int i = 0; i < subsetSize; i++){
 			subset.add(unlabeled.getFrame(i));
@@ -110,7 +115,35 @@ public class ClassifierFactory {
 		return codebook;
 	}
 	
-	private static Instances activationsToInstances(LabeledFrameSet activations,String className, FastVector classValues) {
+	public static Instances activationsToInstances(FrameSet activations,String className, FastVector classValues) {
+		int numOfFrames = activations.size();
+		int numOfBasicVectors = activations.dimension();
+		int numOfAttributes = numOfBasicVectors+1;
+		FastVector attributes = new FastVector(numOfAttributes);
+		
+		//Create attributes for all basic vectors
+		for (int i = 0; i < numOfBasicVectors; i++) {
+			attributes.addElement(new Attribute(""+i));
+		}
+		attributes.addElement(new Attribute(className,classValues));
+		
+		//Create training set
+		Instances instances = new Instances("Rel",attributes,numOfFrames);
+		instances.setClassIndex(numOfAttributes-1);
+		for (int i = 0; i < numOfFrames; i++) {
+			Instance instance = new Instance(numOfAttributes);
+			instance.setDataset(instances);
+			double[] attValues = activations.getFrame(i).toArray();
+			for (int j = 0; j < numOfBasicVectors; j++) {
+				instance.setValue(j, attValues[j]);
+			}
+			instances.add(instance);
+		}
+		
+		return instances;
+	}
+	
+	public static Instances activationsToInstances(LabeledFrameSet activations,String className, FastVector classValues) {
 		int numOfFrames = activations.size();
 		int numOfBasicVectors = activations.dimension();
 		int numOfAttributes = numOfBasicVectors+1;
