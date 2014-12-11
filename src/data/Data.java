@@ -1,11 +1,29 @@
 package data;
 
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.plaf.FileChooserUI;
+
 import org.apache.commons.math3.linear.ArrayRealVector;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.ApplicationFrame;
+import org.jfree.ui.RefineryUtilities;
 
 import weka.core.Attribute;
 import weka.core.FastVector;
@@ -132,14 +150,118 @@ public class Data {
 		return str;
 	}
 	
-	public static void main(String[] args) throws IOException {
-		Data d = Data.readCSV("Project/train/walk_1_other.csv");
-		d.toArff("test.arff");
-		System.out.println(d);
-		System.out.println(d.toArrayRealVector());
-		for (int i = 0; i < d.numOfWindows(); i++) {
-			System.out.println(d.getWindow(i));
+	public void visualize() {
+		ApplicationFrame frame = new ApplicationFrame("Data");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setLayout(new GridLayout(2,2));
+		
+		//Define the data series
+		final XYSeries x_values = new XYSeries("x");
+		final XYSeries y_values = new XYSeries("y");
+		final XYSeries z_values = new XYSeries("z");
+		final XYSeries m_values = new XYSeries("m");
+		
+		for (int i = 0; i < this.instances.numInstances(); i++) {
+			Instance instance = this.instances.instance(i);
+			Double t = instance.value(0)/1e9;
+			x_values.add(t,(Double)instance.value(1));
+			y_values.add(t,(Double)instance.value(2));
+			z_values.add(t,(Double)instance.value(3));
+			m_values.add(t,(Double)instance.value(4));
 		}
+		
+		//Define the collection for the data series
+		final XYSeriesCollection x_data = new XYSeriesCollection();
+		final XYSeriesCollection y_data = new XYSeriesCollection();
+		final XYSeriesCollection z_data = new XYSeriesCollection();
+		final XYSeriesCollection m_data = new XYSeriesCollection();
+		x_data.addSeries(x_values);
+		y_data.addSeries(y_values);
+		z_data.addSeries(z_values);
+		m_data.addSeries(m_values);
+		
+		//Add the series to a chart
+		final JFreeChart x_chart = ChartFactory.createXYLineChart(
+				"X","time","acceleration",x_data,PlotOrientation.VERTICAL,
+				false,true,false);
+		final JFreeChart y_chart = ChartFactory.createXYLineChart(
+				"Y", "time", "acceleration",y_data,PlotOrientation.VERTICAL,
+				false,true,false);
+		final JFreeChart z_chart = ChartFactory.createXYLineChart(
+				"Z","time","acceleration",z_data,PlotOrientation.VERTICAL,
+				false,true,false);
+		final JFreeChart m_chart = ChartFactory.createXYLineChart(
+				"Magnitude", "time", "acceleration",m_data,PlotOrientation.VERTICAL,
+				false,true,false);
+				
+		//Add the charts to panels and the panels to the frame
+		final ChartPanel x_panel = new ChartPanel(x_chart);
+		final ChartPanel y_panel = new ChartPanel(y_chart);
+		final ChartPanel z_panel = new ChartPanel(z_chart);
+		final ChartPanel m_panel = new ChartPanel(m_chart);
+		x_panel.setPreferredSize(new Dimension(500,270));
+		y_panel.setPreferredSize(new Dimension(500,270));
+		z_panel.setPreferredSize(new Dimension(500,270));
+		m_panel.setPreferredSize(new Dimension(500,270));
+		frame.add(x_panel);
+		frame.add(y_panel);
+		frame.add(z_panel);
+		frame.add(m_panel);
+		RefineryUtilities.centerFrameOnScreen(frame);
+		frame.pack();
+		frame.setVisible(true);
+	}
+	
+	/**
+	 * Asks what file to visualize, then visualizes the file
+	 * @throws IOException 
+	 */
+	public static void visualizeFile() throws IOException {
+		final ApplicationFrame frame = new ApplicationFrame("Data");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		JButton button = new JButton("Browse...");
+		button.addActionListener( new ActionListener() {
+			
+			private File currentDirectory = new File(System.getProperty("user.dir"));
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setCurrentDirectory(currentDirectory);
+				int result = fileChooser.showOpenDialog(frame);
+				
+				if (result == JFileChooser.APPROVE_OPTION) {
+					currentDirectory = fileChooser.getCurrentDirectory();
+					Data data;
+					try {
+						data = Data.readCSV(fileChooser.getSelectedFile());
+						data.visualize();
+					} catch (IOException e1) {
+						JOptionPane.showMessageDialog(frame, e1.getMessage());
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		
+		frame.add(button);
+		
+		RefineryUtilities.centerFrameOnScreen(frame);
+		frame.pack();
+		frame.setVisible(true);
+	}
+	
+	public static void main(String[] args) throws IOException {
+//		Data d = Data.readCSV("Project/train/walk_3_other.csv");
+//		d.toArff("test.arff");
+//		System.out.println(d);
+//		System.out.println(d.toArrayRealVector());
+//		d.visualize();
+//		for (int i = 0; i < d.numOfWindows(); i++) {
+//			System.out.println(d.getWindow(i));
+//		}
+		Data.visualizeFile();
 	}
 	
 }
