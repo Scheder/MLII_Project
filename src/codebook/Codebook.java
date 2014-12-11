@@ -12,6 +12,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 
 import smile.regression.LASSO;
+import weka.clusterers.HierarchicalClusterer;
 import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
@@ -107,30 +108,63 @@ public class Codebook {
 		List<FrameSet> batches;
 		
 		while(!converged){
+			System.out.println("Refining codebook...");
+			
 			batches = unlabeledData.partition(partitionStyle, partitionOption);
 			/**
 			 * Array2DRowRealMatrix activationVectors = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), unlabeledData.size());
 			 */
-			//int i = 0;
+			// To show progress...
+			int nbBatches = batches.size();
+			double lastPercentage = -1;
+			int batchesDone = 0;
+			long startTime = System.nanoTime();
 			for(FrameSet batch : batches){
-				System.out.println("try batch");
+				double percentage = Math.floor((double) batchesDone/nbBatches*100);
+				if(percentage != lastPercentage){
+					System.out.println("Progress: " + percentage + "%");
+					lastPercentage = percentage;
+					if(percentage == 1.0){
+						long endTime = System.nanoTime();
+						System.out.println("Expected time to finish: " + ((startTime- endTime)/10000000) + "seconds");
+					}
+				}
+				
 				//Array2DRowRealMatrix activationForBatch = featureSignSearch(batch, alpha);
 				// Trying something different...
+				//System.out.println("a");
 				Array2DRowRealMatrix activationForBatch = l1RegularizedLassoSolve(batch);
+				//System.out.println("b");
 				improveWithLeastSquaresSolve(batch, activationForBatch);
 				/**for(int j = 0; j < batches.size(); j++){
 					activationVectors.setColumnVector(i, activationForBatch.getColumnVector(j));
 					i++;
 				}**/
+				batchesDone++;
 			}
 			
+			System.out.println("Activating unlabeled data...");
 			FrameSet activations = activate(unlabeledData);
-			double currentDistance = getRegularizedReconstructionError(unlabeledData, activations);
+			System.out.println("Calculating reconstruction error...");
+			double currentDistance = getAverageRegularizedReconstructionError(unlabeledData, activations);
 			
-			System.out.println("Current distance = " + currentDistance);
-			if(previousDistance - currentDistance < convergenceThreshold){
+			System.out.println("Current error = " + currentDistance);
+			if(currentDistance > previousDistance){
+				System.out.println("DISTANCE INCREASED! Running again.");
+				previousDistance = currentDistance;
+			}else if(previousDistance - currentDistance < convergenceThreshold){
 				converged = true;
+			/** TODO PART OF DEBUGGING CODE
+			 * }else if(previousDistance - currentDistance < 0.5){
+				try {
+					getMostInformativeSubset();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}**/
 			}else{
+				System.out.println("We made a step of " + (previousDistance - currentDistance) 
+						+ ", which does not meet convergence criteria. Running again.");
 				previousDistance = currentDistance;
 			}
 			
@@ -138,7 +172,7 @@ public class Codebook {
 	}
 	
 	
-	public Codebook getMostInformativeSubset(){
+	public Codebook getMostInformativeSubset() throws Exception{
 		// TODO implement
 		
 		//Create attributes for all basic vector components.
@@ -158,12 +192,21 @@ public class Codebook {
 			instances.add(instance);
 		}
 		
-		// Make clusters.
-		String[] options = new String[2];
-		options[0] = "-N";   // number of clusters
-		options[1] = "" + Math.ceil((double) basisVectors.getColumnDimension() / 10);
+		// Make clusterer.
+		int nbClusters = new Double(Math.ceil((double) basisVectors.getColumnDimension() / 10)).intValue();
+		String[] options = weka.core.Utils.splitOptions("-N " + nbClusters 
+				+ " -L COMPLETE -A codebook.MaximalCrossCorrelation");
 		
-		// TODO finish
+		HierarchicalClusterer clust = new HierarchicalClusterer();
+		clust.setOptions(options);
+		clust.buildClusterer(instances);
+		
+		int[] clustered = new int[basisVectors.getColumnDimension()];
+		for(int i = 0; i < basisVectors.getColumnDimension(); i++){
+			clustered[i] = clust.clusterInstance(instances.instance(i));
+		}
+		System.out.println(clustered);
+		
 		
 		
 		
@@ -180,7 +223,7 @@ public class Codebook {
 	 * @param activationVectors	Coefficient vectors to reconstruct the measurements.
 	 * @return	Regularized reconstruction error.
 	 */
-	private double getRegularizedReconstructionError(
+	private double getAverageRegularizedReconstructionError(
 			FrameSet data, FrameSet activationVectors) {
 		
 		double accumulator = 0;
@@ -191,7 +234,7 @@ public class Codebook {
 			accumulator += alpha*activationVectors.getFrame(0).getL1Norm();
 		}
 		
-		return accumulator;
+		return accumulator/data.size();
 	}
 	
 	/**

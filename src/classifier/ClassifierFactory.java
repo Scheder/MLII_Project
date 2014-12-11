@@ -3,6 +3,8 @@ package classifier;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+
 import weka.classifiers.Classifier;
 import weka.classifiers.meta.Vote;
 import weka.classifiers.mi.MISVM;
@@ -27,6 +29,21 @@ public class ClassifierFactory {
 		double convergenceThreshold = 0.5;
 		double alpha = 0.5;
 		int basisSize = 256;
+		
+		/**
+		 * TAKE SUBSET FOR TESTING
+		 */
+		int subsetSize = 500;
+		basisSize = 64;
+		ArrayList<ArrayRealVector> subset = new ArrayList<ArrayRealVector>(subsetSize);
+		for(int i = 0; i < subsetSize; i++){
+			subset.add(unlabeled.getFrame(i));
+		}
+		unlabeled = new FrameSet(subset);
+		/**
+		 * DELETE AFTER TESTING!!
+		 */
+		
 		Codebook codebook = CodebookFactory.newCodebook(unlabeled, partitionStyle, partitionOption, basisSize, convergenceThreshold, alpha);
 		
 		// Initialize optimal code book.
