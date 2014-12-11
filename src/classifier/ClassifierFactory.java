@@ -26,7 +26,7 @@ public class ClassifierFactory {
 		int partitionOption = 0;
 		double convergenceThreshold = 0;
 		double alpha = 0;
-		Codebook initCodebook = CodebookFactory.newCodebook(unlabeled, partitionStyle, partitionOption, convergenceThreshold, alpha);
+		Codebook codebook = CodebookFactory.newCodebook(unlabeled, partitionStyle, partitionOption, convergenceThreshold, alpha);
 		
 		// Initialize optimal code book.
 		//Codebook codebook = initCodebook.getMostInformative();
@@ -35,6 +35,8 @@ public class ClassifierFactory {
 		// for each vector in labeled dataset
 		// minimize activation vectors
 		// add to classifier with labeled vector
+		
+		FrameSet activations = codebook.activate(labeled);
 		
 		// C = train classifier
 		int numOfFrames = labeled.size();

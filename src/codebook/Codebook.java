@@ -2,18 +2,13 @@ package codebook;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.TreeSet;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.DecompositionSolver;
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.QRDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 
 import smile.regression.LASSO;
@@ -23,6 +18,7 @@ import data.FrameSet;
 public class Codebook {
 
 	RealMatrix basisVectors;
+	double alpha;
 	
 	public Codebook(int codebookDimension, int codebookSize){
 		
@@ -62,6 +58,7 @@ public class Codebook {
 	
 	public void learnUnlabeledData(FrameSet unlabeledData, String partitionStyle, int partitionOption, double convergenceThreshold, double alpha){
 		double previousDistance = Double.MAX_VALUE;
+		this.alpha = alpha;
 		boolean converged = false;
 		
 		List<FrameSet> batches;
@@ -73,14 +70,14 @@ public class Codebook {
 			for(FrameSet batch : batches){
 				//Array2DRowRealMatrix activationForBatch = featureSignSearch(batch, alpha);
 				// Trying something different...
-				Array2DRowRealMatrix activationForBatch = l1ConstrainedLassoSolve(batch, alpha);
+				Array2DRowRealMatrix activationForBatch = l1ConstrainedLassoSolve(batch);
 				improveWithLeastSquaresSolve(batch, activationForBatch);
 				for(int j = 0; j < batches.size(); j++){
 					activationVectors.setColumnVector(i, activationForBatch.getColumnVector(j));
 					i++;
 				}
 			}
-			double currentDistance = getLeastSquaresDistance(unlabeledData, activationVectors, alpha);
+			double currentDistance = getLeastSquaresDistance(unlabeledData, activationVectors);
 			if(previousDistance - currentDistance < convergenceThreshold){
 				converged = true;
 			}else{
@@ -96,7 +93,7 @@ public class Codebook {
 	}
 	
 	private double getLeastSquaresDistance(
-			FrameSet unlabeledData, Array2DRowRealMatrix activationVectors, double alpha) {
+			FrameSet unlabeledData, Array2DRowRealMatrix activationVectors) {
 		
 		double accumulator = 0;
 		RealMatrix difference = unlabeledData.toMatrix().subtract(basisVectors.multiply(activationVectors));
@@ -109,11 +106,13 @@ public class Codebook {
 		return accumulator;
 	}
 	
-	private Array2DRowRealMatrix l1ConstrainedLassoSolve(FrameSet batch, double alpha){
+	public FrameSet activate(FrameSet labeled) {
+		return new FrameSet(l1ConstrainedLassoSolve(labeled));
+	}
+	
+	private Array2DRowRealMatrix l1ConstrainedLassoSolve(FrameSet batch){
 		
 		PrintStream originalStream = System.out;
-		
-		final PrintStream originalOut = System.out;
 
 		// To suppress LASSO prints...
 		PrintStream dummyStream    = new PrintStream(new OutputStream(){
@@ -149,7 +148,7 @@ public class Codebook {
 
 	/**
 	private Array2DRowRealMatrix featureSignSearch(FrameSet batch, double alpha){
-		// TODO check correctness
+		// 2D0 check correctness
 		Array2DRowRealMatrix activationMatrix = new Array2DRowRealMatrix(basisVectors.getColumnDimension(), batch.size());
 		
 		// For each vector in batch,
@@ -230,7 +229,7 @@ public class Codebook {
 			
 			System.out.println(bSub.transpose().multiply(bSub));
 			
-			RealVector p2 = bSub.transpose().operate(y.subtract(t.mapMultiply(alpha/2))); // TODO check formula. PDF is ambiguous.
+			RealVector p2 = bSub.transpose().operate(y.subtract(t.mapMultiply(alpha/2))); // 2D0 check formula. PDF is ambiguous.
 			RealVector xSol = p1.operate(p2);
 			
 			// Perform a discrete line search on the closed line segment from xSub to xSol
@@ -302,7 +301,6 @@ public class Codebook {
 		return x;
 		
 	}
-	**/
 	
 	private double calculateFeatureSignObjective(RealVector y, RealMatrix a, RealVector x, RealVector t, double alpha){
 		
@@ -310,7 +308,7 @@ public class Codebook {
 		
 	}
 	
-	//TODO check correctness
+	//todo check correctness
 	private ArrayRealVector getDifferentialFor(RealVector solVector, RealVector variableVector){
 		RealVector temp = basisVectors.operate(variableVector);
 		ArrayRealVector lsDifferential = new ArrayRealVector(variableVector.getDimension());
@@ -324,6 +322,7 @@ public class Codebook {
 		return lsDifferential;
 		
 	}
+		**/
 	
 	private void improveWithLeastSquaresSolve(FrameSet batch, Array2DRowRealMatrix activationForBatch){
 		// We solve the least squares problem
