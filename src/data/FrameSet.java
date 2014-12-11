@@ -33,6 +33,17 @@ public class FrameSet {
 		
 	}
 	
+	public FrameSet(Array2DRowRealMatrix frameMatrix) {
+		this.size = frameMatrix.getColumnDimension();
+		this.dimension = frameMatrix.getRowDimension();
+		
+		this.frameSet = new ArrayList<ArrayRealVector>(this.size);
+		
+		for(int i = 0; i < this.size; i++){
+			frameSet.add(new ArrayRealVector(frameMatrix.getColumnVector(i)));
+		}
+	}
+
 	public int size(){
 		return this.size;
 	}

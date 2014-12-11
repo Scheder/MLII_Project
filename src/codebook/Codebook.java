@@ -18,6 +18,7 @@ import data.FrameSet;
 public class Codebook {
 
 	RealMatrix basisVectors;
+	double alpha;
 	
 	public Codebook(int codebookDimension, int codebookSize){
 		
@@ -57,6 +58,7 @@ public class Codebook {
 	
 	public void learnUnlabeledData(FrameSet unlabeledData, String partitionStyle, int partitionOption, double convergenceThreshold, double alpha){
 		double previousDistance = Double.MAX_VALUE;
+		this.alpha = alpha;
 		boolean converged = false;
 		
 		List<FrameSet> batches;
@@ -68,14 +70,14 @@ public class Codebook {
 			for(FrameSet batch : batches){
 				//Array2DRowRealMatrix activationForBatch = featureSignSearch(batch, alpha);
 				// Trying something different...
-				Array2DRowRealMatrix activationForBatch = l1ConstrainedLassoSolve(batch, alpha);
+				Array2DRowRealMatrix activationForBatch = l1ConstrainedLassoSolve(batch);
 				improveWithLeastSquaresSolve(batch, activationForBatch);
 				for(int j = 0; j < batches.size(); j++){
 					activationVectors.setColumnVector(i, activationForBatch.getColumnVector(j));
 					i++;
 				}
 			}
-			double currentDistance = getLeastSquaresDistance(unlabeledData, activationVectors, alpha);
+			double currentDistance = getLeastSquaresDistance(unlabeledData, activationVectors);
 			if(previousDistance - currentDistance < convergenceThreshold){
 				converged = true;
 			}else{
@@ -91,7 +93,7 @@ public class Codebook {
 	}
 	
 	private double getLeastSquaresDistance(
-			FrameSet unlabeledData, Array2DRowRealMatrix activationVectors, double alpha) {
+			FrameSet unlabeledData, Array2DRowRealMatrix activationVectors) {
 		
 		double accumulator = 0;
 		RealMatrix difference = unlabeledData.toMatrix().subtract(basisVectors.multiply(activationVectors));
@@ -104,7 +106,11 @@ public class Codebook {
 		return accumulator;
 	}
 	
-	private Array2DRowRealMatrix l1ConstrainedLassoSolve(FrameSet batch, double alpha){
+	public FrameSet activate(FrameSet labeled) {
+		return new FrameSet(l1ConstrainedLassoSolve(labeled));
+	}
+	
+	private Array2DRowRealMatrix l1ConstrainedLassoSolve(FrameSet batch){
 		
 		PrintStream originalStream = System.out;
 
