@@ -36,6 +36,8 @@ public class ClassifierFactory {
 		// Initialize optimal code book.
 		//Codebook codebook = initCodebook.getMostInformative();
 		
+		codebook.getMostInformativeSubset();
+		
 		// Initialize feature set.
 		// for each vector in labeled dataset
 		// minimize activation vectors
@@ -96,6 +98,7 @@ public class ClassifierFactory {
 		 */
 		int subsetSize = 500;
 		basisSize = 64;
+		convergenceThreshold = 0.02;
 		ArrayList<ArrayRealVector> subset = new ArrayList<ArrayRealVector>(subsetSize);
 		for(int i = 0; i < subsetSize; i++){
 			subset.add(unlabeled.getFrame(i));

@@ -3,6 +3,10 @@ package codebook;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -10,9 +14,15 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 
+import smile.clustering.HierarchicalClustering;
+import smile.clustering.linkage.CompleteLinkage;
+import smile.clustering.linkage.Linkage;
+import smile.math.Math;
 import smile.regression.LASSO;
+import weka.clusterers.ClusterEvaluation;
 import weka.clusterers.HierarchicalClusterer;
 import weka.core.Attribute;
 import weka.core.FastVector;
@@ -73,6 +83,19 @@ public class Codebook implements Serializable {
 			
 			// Add vector to set of basis vectors.
 			basisVectors.setColumnVector(vectorIndex, vector);
+		}
+	}
+	
+	private Codebook(Collection<RealVector> basisVectors, double alpha){
+		this.alpha = alpha;
+		int i = 0;
+		
+		for(RealVector vect : basisVectors){
+			if(i == 0){
+				this.basisVectors = new Array2DRowRealMatrix(vect.getDimension(), basisVectors.size());
+			}
+			this.basisVectors.setColumnVector(i, vect);
+			i++;
 		}
 	}
 	
@@ -177,43 +200,85 @@ public class Codebook implements Serializable {
 	public Codebook getMostInformativeSubset() throws Exception{
 		// TODO implement
 		
-		//Create attributes for all basic vector components.
-		FastVector attributes = new FastVector(basisVectors.getRowDimension());
-		
-		for(int i = 0; i < basisVectors.getRowDimension(); i++) {
-			attributes.addElement(new Attribute(""+i));
+		// Get distance matrix for all basis vectors.
+		int numVects = basisVectors.getColumnDimension();
+		double[][] proximity = new double[numVects][];
+		for(int i = 0; i < numVects; i++){
+			proximity[i] = new double[i+1];
+			for(int j = 0; j < i; j++){
+				proximity[i][j] = MaximalCrossCorrelation.distance(
+						basisVectors.getColumnVector(i), basisVectors.getColumnVector(j));
+			}
 		}
 		
-		// Instantiate instances object.
-		Instances  instances = new Instances("BVect", attributes, basisVectors.getColumnDimension());
+		// Generate complete linkage cluster.
+		HierarchicalClustering hc = new HierarchicalClustering(new CompleteLinkage(proximity));
 		
-		// Populate with instances of basis vectors.
-		for(int i = 0; i < basisVectors.getColumnDimension(); i++){
-			double[] attValues = basisVectors.getColumn(i);
-			Instance instance = new Instance(1, attValues);
-			instances.add(instance);
+		// Cutoff at (ceil) number of vectors / 10.
+        int[] label = hc.partition((int) Math.ceil((double) numVects/10));
+        
+        // Separate clusters
+        
+        // Allocate.
+        ArrayList<ArrayList<RealVector>> res = new ArrayList<ArrayList<RealVector>>((int) Math.ceil((double) numVects/10));
+        for(int i = 0; i < Math.ceil((double) numVects/10); i++){
+        	res.add(new ArrayList<RealVector>());
+        }
+        
+        // Populate.
+        for(int i = 0; i < label.length; i++){
+        	res.get(label[i]).add(basisVectors.getColumnVector(i));
+        }
+        
+        // Extract most relevant basis vectors.
+        LinkedList<RealVector> newBasisVectors = new LinkedList<RealVector>();
+        for(int i = 0; i < Math.ceil((double) numVects/10); i++){
+        	
+        	// Sort.
+        	Collections.sort(res.get(i), new java.util.Comparator<RealVector>() {
+        	    public int compare(RealVector a, RealVector b) {
+        	        double shanA = empiricalEntropy(a, 10);
+        	        double shanB = empiricalEntropy(a, 10);
+        	        return Double.compare(shanB, shanA);
+        	    }
+        	});
+        	
+        	// Select most relevant 90%.
+        	int itemsToSelect = (int) Math.ceil((double) res.size()/0.9);
+        	for(int j = 0; j < itemsToSelect; j++){
+        		newBasisVectors.add(res.get(i).get(j));
+        	}
+        	
+        }
+        
+        // Return better codebook.
+        return new Codebook(newBasisVectors, this.alpha);
+	}
+	
+	public double empiricalEntropy(RealVector v, int numBuckets){
+		
+		double max = v.getMaxValue();
+		double min = v.getMinValue();
+		RealVector normalizedV = v.mapSubtract(min).mapDivide(max-min);
+		
+		double[] buckets = new double[numBuckets];
+		for(double el : normalizedV.toArray()){
+			if(el == 1){
+				buckets[9] ++;
+			}else{
+				int index = new Double(Math.floor(el*10)).intValue();
+				buckets[index] ++;
+			}
 		}
 		
-		// Make clusterer.
-		int nbClusters = new Double(Math.ceil((double) basisVectors.getColumnDimension() / 10)).intValue();
-		String[] options = weka.core.Utils.splitOptions("-N " + nbClusters 
-				+ " -L COMPLETE -A codebook.MaximalCrossCorrelation");
+		double entropy = 0;
+		int count = v.getDimension();
 		
-		HierarchicalClusterer clust = new HierarchicalClusterer();
-		clust.setOptions(options);
-		clust.buildClusterer(instances);
-		
-		int[] clustered = new int[basisVectors.getColumnDimension()];
-		for(int i = 0; i < basisVectors.getColumnDimension(); i++){
-			clustered[i] = clust.clusterInstance(instances.instance(i));
+		for(double el : buckets){
+			entropy -= (el/count)*Math.log2(el);
 		}
-		System.out.println(clustered);
 		
-		
-		
-		
-		
-		return null;
+		return entropy;
 	}
 	
 	/**
