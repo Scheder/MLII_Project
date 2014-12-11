@@ -64,7 +64,7 @@ public class Data {
 		d.instances = loader.getDataSet();
 		
 		//Add magnitudes
-		Attribute magAttr = new Attribute("magnitude");
+		Attribute magAttr = new Attribute("magnitude",d.instances.numAttributes());
 		d.instances.insertAttributeAt(magAttr,d.instances.numAttributes());
 		
 		Instance instance;
@@ -75,15 +75,20 @@ public class Data {
 			y = instance.value(2);
 			z = instance.value(3);
 			mag = Math.sqrt(x*x + y*y + z*z);
-			instance.setValue(4, mag);
+			instance.setValue(magAttr.index(), mag);
 		}
 		
 		//Add class "walking". All instances are set to unknown.
-		final FastVector walkingValues = new FastVector(2);
-		walkingValues.addElement("Yes");
-		walkingValues.addElement("No");
-		final Attribute walking = new Attribute("walking",walkingValues);
-		d.instances.insertAttributeAt(walking,d.instances.numAttributes());
+		//Only add if it wasn't there already
+		Attribute walking = d.instances.attribute("walking");
+		if (walking == null) {
+			final FastVector walkingValues = new FastVector(2);
+			walkingValues.addElement("Yes");
+			walkingValues.addElement("No");
+			walking = new Attribute("walking",walkingValues);
+			d.instances.insertAttributeAt(walking,d.instances.numAttributes());
+		}
+		
 		d.instances.setClass(walking);
 		
 		return d;
@@ -264,15 +269,17 @@ public class Data {
 	}
 	
 	public static void main(String[] args) throws IOException {
-//		Data d = Data.readCSV("Project/train/walk_3_other.csv");
-//		d.toArff("test.arff");
+		Data d = Data.readCSV("Project/labeled_walking_train/walk_45_other.csv");
+//		Data d = Data.readCSV("Project/train/walk_1_other.csv");
+		System.out.println(d);
+		d.toArff("test.arff");
 //		System.out.println(d);
 //		System.out.println(d.toArrayRealVector());
 //		d.visualize();
 //		for (int i = 0; i < d.numOfWindows(); i++) {
 //			System.out.println(d.getWindow(i));
 //		}
-		Data.visualizeFile();
+//		Data.visualizeFile();
 	}
 	
 }
