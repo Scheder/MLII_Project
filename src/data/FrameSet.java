@@ -86,7 +86,7 @@ public class FrameSet {
 	}
 	
 	public ArrayList<FrameSet> partition(String partitionType, int partitionOption){
-		System.out.println("Partitioning.");
+		//System.out.println("Partitioning.");
 		
 		// Generate set number of partitions.
 		
@@ -116,8 +116,8 @@ public class FrameSet {
 		}else{
 			throw new IllegalArgumentException("partitionType can only equal 'numberPartitions' or 'partitionSize'.");
 		}
-		System.out.println(itemsPerPartition);
-		System.out.println(numberOfPartitions);
+		//System.out.println(itemsPerPartition);
+		//System.out.println(numberOfPartitions);
 			
 		ArrayList<FrameSet> partitions = new ArrayList<FrameSet>(numberOfPartitions);
 		List<ArrayRealVector> source = permuteList(frameSet);
