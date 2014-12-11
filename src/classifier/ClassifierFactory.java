@@ -39,8 +39,8 @@ public class ClassifierFactory {
 		FrameSet activations = codebook.activate(labeled);
 		
 		// C = train classifier
-		int numOfFrames = labeled.size();
-		int numOfBasicVectors = labeled.dimension();
+		int numOfFrames = activations.size();
+		int numOfBasicVectors = activations.dimension();
 		FastVector attributes = new FastVector(numOfBasicVectors);
 		//Create attributes for all basic vectors
 		for (int i = 0; i < numOfBasicVectors; i++) {
@@ -54,7 +54,7 @@ public class ClassifierFactory {
 		trainingSet.setClassIndex(numOfBasicVectors);
 		for (int i = 0; i < numOfFrames; i++) {
 			//TODO get label.
-			double[] attValues = labeled.getFrame(i).toArray();
+			double[] attValues = activations.getFrame(i).toArray();
 			Instance instance = new Instance(1, attValues);
 			trainingSet.add(instance);
 		}
