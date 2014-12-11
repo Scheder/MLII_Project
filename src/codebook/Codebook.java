@@ -151,11 +151,12 @@ public class Codebook {
 			instances.add(instance);
 		}
 		
-		// Make cluster.
+		// Make clusters.
 		String[] options = new String[2];
-		options[0] = "-N";                 // max. iterations
-		options[1] = "100";
+		options[0] = "-N";   // number of clusters
+		options[1] = "" + Math.ceil((double) basisVectors.getColumnDimension() / 10);
 		
+		// TODO finish
 		
 		
 		
