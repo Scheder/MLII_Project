@@ -249,7 +249,7 @@ public class Codebook implements Serializable {
         	int itemsToSelect = (int) Math.min(Math.ceil((double) currList.size()*0.9), currList.size());
         	for(int j = 0; j < itemsToSelect; j++){
         		newBasisVectors.add(currList.get(j));
-        		System.out.println(empiricalEntropy(currList.get(j), 10));
+        		//System.out.println(empiricalEntropy(currList.get(j), 10));
         	}
         	
         }
