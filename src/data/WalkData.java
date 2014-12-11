@@ -164,7 +164,10 @@ public class WalkData extends Data {
 			String label = labels.get(i);
 			
 			//No need to add non-walking frames
-			if ("No".equals(label)) continue;
+			if ("No".equals(label)) {
+				System.out.println("Hello" + this.file.getName());
+				continue;
+			}
 			
 			for (int j = 0; j < window.instances.numInstances(); j++) {
 				Instance instance = window.instances.instance(j);

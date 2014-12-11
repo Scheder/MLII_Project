@@ -23,6 +23,7 @@ import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.converters.ArffSaver;
 import codebook.Codebook;
 import codebook.CodebookFactory;
 import data.FrameSet;
@@ -53,6 +54,12 @@ public class ClassifierFactory {
 		Instances trainSet = ClassifierFactory.activationsToInstances(
 				labeledActivations, "walking", walkingValues);
 		
+		ArffSaver saver = new ArffSaver();
+		saver.setInstances(trainSet);
+		File file = new File("test.arff");
+		saver.setFile(file);
+		saver.setDestination(file);
+		saver.writeBatch();
 		
 		//Create array of classifiers
 		//TODO use options for classifiers and add classifiers
@@ -70,9 +77,9 @@ public class ClassifierFactory {
 //		vote.buildClassifier(trainSet);
 //		return vote;
 		//TODO use meta classifier. vote can not work with numeric attribute
-		smo.buildClassifier(trainSet);
+		Classifier classifier = j48;
 		
-		Classifier classifier = smo;
+		classifier.buildClassifier(trainSet);
 		return new CodebookClassifier(codebook, classifier);
 	}
 	
@@ -115,6 +122,14 @@ public class ClassifierFactory {
 		return codebook;
 	}
 	
+	/**
+	 * Turns activations into instances without labels.
+	 * This is used during the classification stage.
+	 * @param activations
+	 * @param className
+	 * @param classValues
+	 * @return
+	 */
 	public static Instances activationsToInstances(FrameSet activations,String className, FastVector classValues) {
 		int numOfFrames = activations.size();
 		int numOfBasicVectors = activations.dimension();
@@ -143,6 +158,14 @@ public class ClassifierFactory {
 		return instances;
 	}
 	
+	/**
+	 * Turns activations into instances with labels.
+	 * This is used during the learning stage.
+	 * @param activations
+	 * @param className
+	 * @param classValues
+	 * @return
+	 */
 	public static Instances activationsToInstances(LabeledFrameSet activations,String className, FastVector classValues) {
 		int numOfFrames = activations.size();
 		int numOfBasicVectors = activations.dimension();
