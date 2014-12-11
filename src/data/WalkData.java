@@ -165,7 +165,6 @@ public class WalkData extends Data {
 			
 			//No need to add non-walking frames
 			if ("No".equals(label)) {
-				System.out.println("Hello" + this.file.getName());
 				continue;
 			}
 			
