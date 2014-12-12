@@ -163,14 +163,8 @@ public class CodebookFactory {
 		}
 		return codebook;
 	}
-<<<<<<< HEAD
 
 	private static void serializeCodebook(Codebook codebook, String fileName)
-=======
-	
-	
-	public static void serializeCodebook(Codebook codebook,String fileName)
->>>>>>> FETCH_HEAD
 			throws IOException {
 		OutputStream file = new FileOutputStream(fileName);
 		OutputStream buffer = new BufferedOutputStream(file);
@@ -181,13 +175,8 @@ public class CodebookFactory {
 			output.close();
 		}
 	}
-<<<<<<< HEAD
 
 	private static Codebook deserializeCodebook(String fileName)
-=======
-	
-	public static Codebook deserializeCodebook(String fileName)
->>>>>>> FETCH_HEAD
 			throws IOException, ClassNotFoundException {
 		InputStream file = new FileInputStream(fileName);
 		InputStream buffer = new BufferedInputStream(file);
