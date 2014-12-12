@@ -49,7 +49,7 @@ public class Main {
 		//Second read all labeled train data in memory
 		LabeledFrameSet labeled = Main.getLabeledWalkFrameSet(new File("Project/labeled_train"));
 		CodebookClassifier classifier = ClassifierFactory.createWalkClassifier(labeled, unlabeled);
-		Main.writeFilteredWalkData(classifier);
+		//Main.writeFilteredWalkData(classifier);
 	}
 	
 	private static FrameSet getPersonFrameSet(final File folder) {		

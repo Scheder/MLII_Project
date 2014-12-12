@@ -98,8 +98,8 @@ public class ClassifierFactory {
 		// TODO: choose values, or make value picker.
 		String partitionStyle = "partitionSize";
 		int partitionOption = 50;
-		double convergenceThreshold = 0.5;
-		double alpha = 0.5;
+		double convergenceThreshold = 0.1;
+		double alpha = 0.9;
 		int basisSize = 256;
 		
 		/**
@@ -107,7 +107,6 @@ public class ClassifierFactory {
 		 */
 		int subsetSize = 500;
 		basisSize = 128;
-		convergenceThreshold = 0.02;
 		ArrayList<ArrayRealVector> subset = new ArrayList<ArrayRealVector>(subsetSize);
 		for(int i = 0; i < subsetSize; i++){
 			subset.add(unlabeled.getFrame(i));
