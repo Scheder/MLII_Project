@@ -171,7 +171,7 @@ public class CodebookFactory {
 	 * @param fileName	Filename for the codebook.
 	 * @throws IOException	Thrown if writing to disk fails.
 	 */
-	private static void serializeCodebook(Codebook codebook, String fileName)
+	public static void serializeCodebook(Codebook codebook, String fileName)
 			throws IOException {
 		OutputStream file = new FileOutputStream(fileName);
 		OutputStream buffer = new BufferedOutputStream(file);
@@ -190,7 +190,7 @@ public class CodebookFactory {
 	 * @param fileName	Filename of the codebook.
 	 * @throws IOException	Thrown if reading from disk fails.
 	 */
-	private static Codebook deserializeCodebook(String fileName)
+	public static Codebook deserializeCodebook(String fileName)
 			throws IOException, ClassNotFoundException {
 		InputStream file = new FileInputStream(fileName);
 		InputStream buffer = new BufferedInputStream(file);

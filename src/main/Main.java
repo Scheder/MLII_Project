@@ -27,7 +27,7 @@ public class Main {
 	/**
 	 * FilenameFilter selecting CSV filenames.
 	 */
-	private static class CSVFilter implements FilenameFilter {
+	public static class CSVFilter implements FilenameFilter {
 
 		@Override
 		public boolean accept(File dir, String name) {
@@ -48,14 +48,24 @@ public class Main {
 	
 	private static void labelTestData() throws Exception {
 		//Read all test data
-		FrameSet testSet = Main.getWalkFrameSet("Project/test");
-		LabeledFrameSet labeled = 
+		LabeledFrameSet walkLabeled = 
 				Main.getLabeledWalkFrameSet("Project/labeled_train");
 		//Get codebook
-		Codebook codebook = 
+		Codebook walkCodebook = 
 				CodebookFactory.deserializeCodebook(Main.walkCodebookFile);
 		CodebookClassifier classifier = 
-				ClassifierFactory.createWalkClassifier(codebook, labeled);
+				ClassifierFactory.
+				createWalkClassifier(walkCodebook, walkLabeled);
+		Main.writeFilteredWalkData(classifier,"Project/test");
+		
+		LabeledFrameSet personLabeled =
+				Main.getLabeledPersonFrameSet("Project/labeled_train");
+		Codebook personCodebook =
+				CodebookFactory.deserializeCodebook(Main.personCodebookFile);
+		CodebookClassifier personClassifier =
+				ClassifierFactory.
+				createPersonClassifier(personCodebook, personLabeled);
+		personClassifier.classify("Project/filtered_test");
 	}
 	
 	private static void filterAndEvaluateCodebooks() throws Exception {
@@ -69,7 +79,7 @@ public class Main {
 		Codebook walkCodebook = CodebookFactory.getCodebook(walkUnlabeled);
 		CodebookClassifier walkClassifier = 
 				ClassifierFactory.createWalkClassifier(walkCodebook,walkLabeled);
-		Main.writeFilteredWalkData(walkClassifier);
+		Main.writeFilteredWalkData(walkClassifier,"Project/train");
 		
 		/** PERSON DATA **/
 		FrameSet personUnlabeled = 
@@ -88,8 +98,8 @@ public class Main {
 		personClassifier.evaluate(personLabeled, "person", classValues);
 	}
 	
-	private static FrameSet getPersonFrameSet(final String fileName) {
-		final File folder = new File(fileName);
+	private static FrameSet getPersonFrameSet(final String folderName) {
+		final File folder = new File(folderName);
 		//Get all CSV files
 		List<ArrayRealVector> frames = new ArrayList<ArrayRealVector>();
 		for (File file : folder.listFiles(new Main.CSVFilter())) {
@@ -107,8 +117,8 @@ public class Main {
 	}
 	
 	private static LabeledFrameSet getLabeledPersonFrameSet(
-			final String fileName) {
-		final File folder = new File(fileName);
+			final String folderName) {
+		final File folder = new File(folderName);
 		//Get all CSV files
 		List<ArrayRealVector> frames = new ArrayList<ArrayRealVector>();
 		List<String> labels = new ArrayList<String>();
@@ -126,8 +136,8 @@ public class Main {
 		return new LabeledFrameSet(frames, labels);
 	}
 	
-	private static FrameSet getWalkFrameSet(final String fileName) {
-		final File folder = new File(fileName);
+	private static FrameSet getWalkFrameSet(final String folderName) {
+		final File folder = new File(folderName);
 		//Get all CSV files
 		List<ArrayRealVector> frames = new ArrayList<ArrayRealVector>();
 		for (File file : folder.listFiles(new Main.CSVFilter())) {
@@ -143,8 +153,8 @@ public class Main {
 	}
 	
 	private static LabeledFrameSet getLabeledWalkFrameSet(
-			final String fileName) {
-		final File folder = new File(fileName);
+			final String folderName) {
+		final File folder = new File(folderName);
 		//Get all CSV files
 		List<ArrayRealVector> frames = new ArrayList<ArrayRealVector>();
 		List<String> labels = new ArrayList<String>();
@@ -162,9 +172,11 @@ public class Main {
 		return new LabeledFrameSet(frames, labels);
 	}
 	
-	private static void writeFilteredWalkData(CodebookClassifier classifier)
+	private static void writeFilteredWalkData(
+			CodebookClassifier classifier, String folderName)
 			throws Exception {
-		File folder = new File("Project/train");
+		System.out.println("Filtering walk data...");
+		File folder = new File(folderName);
 		for (File file : folder.listFiles(new Main.CSVFilter())) {
 			WalkData d = new WalkData();
 			try {

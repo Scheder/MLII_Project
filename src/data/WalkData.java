@@ -92,8 +92,8 @@ public class WalkData extends Data {
 				"Z","time","acceleration",z_data,PlotOrientation.VERTICAL,
 				false,true,false);
 		final JFreeChart m_chart = ChartFactory.createXYLineChart(
-				"Magnitude", "time", "acceleration",m_data,PlotOrientation.VERTICAL,
-				false,true,false);
+				"Magnitude", "time", "acceleration",m_data,
+				PlotOrientation.VERTICAL,false,true,false);
 				
 		//Add the charts to panels and the panels to the frame
 		final ChartPanel x_panel = new ChartPanel(x_chart);
@@ -124,13 +124,15 @@ public class WalkData extends Data {
 		JButton button = new JButton("Browse...");
 		button.addActionListener( new ActionListener() {
 			
-			private File currentDirectory = new File(System.getProperty("user.dir"));
+			private File currentDirectory = 
+					new File(System.getProperty("user.dir"));
 			
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fileChooser = new JFileChooser();
 				fileChooser.setMultiSelectionEnabled(true);
-				FileNameExtensionFilter filter = new FileNameExtensionFilter("CSV files", "CSV");
+				FileNameExtensionFilter filter = 
+						new FileNameExtensionFilter("CSV files", "CSV");
 				fileChooser.setFileFilter(filter);
 				fileChooser.setCurrentDirectory(currentDirectory);
 				int result = fileChooser.showOpenDialog(frame);
@@ -139,14 +141,19 @@ public class WalkData extends Data {
 					currentDirectory = fileChooser.getCurrentDirectory();
 					File[] files = fileChooser.getSelectedFiles();
 					for (File file : files) {
-						System.out.println("Visualizing: " + file.getName() + "...");
+						System.out.println(
+								"Visualizing: " + file.getName() + "...");
 						try {
 							WalkData data = new WalkData();
 							data.readCSV(file);
 							data.visualize(file.getName());
 						} catch (IOException e1) {
 							e1.printStackTrace();
-							JOptionPane.showMessageDialog(frame,e1.getMessage(),file.getName(),JOptionPane.ERROR_MESSAGE);
+							JOptionPane.showMessageDialog(
+									frame,
+									e1.getMessage(),
+									file.getName(),
+									JOptionPane.ERROR_MESSAGE);
 						}
 					}
 				}
@@ -161,9 +168,11 @@ public class WalkData extends Data {
 	}
 	
 	public void writeData(final List<String> labels) throws IOException {
+		System.out.println("Filtering " + this.file.getName());
 		if (this.numOfWindows() == 0) return;
 		
-		Instances writeInstances = new Instances(this.instances,this.instances.numInstances());
+		Instances writeInstances = new Instances(
+				this.instances,this.instances.numInstances());
 		for (int i = 0; i < this.numOfWindows(); i++) {
 			Data window = this.getWindow(i);
 			String label = labels.get(i);
@@ -182,7 +191,9 @@ public class WalkData extends Data {
 		writeInstances.setClassIndex(-1);
 		writeInstances.deleteAttributeAt(classIndex);
 		
-		File outputFile = new File("Project/filtered_train/filtered_"+this.file.getName());
+		String parent = this.file.getParentFile().getName();
+		File outputFile = new File("Project/filtered_"+parent+
+				"/filtered_"+this.file.getName());
 		CSVSaver saver = new CSVSaver();
 		saver.setInstances(writeInstances);
 		saver.setFile(outputFile);
