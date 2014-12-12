@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
+import codebook.Codebook;
 import classifier.ClassifierFactory;
 import classifier.CodebookClassifier;
 import data.Data;
@@ -37,7 +38,8 @@ public class Main {
 		/** PERSON DATA **/
 		FrameSet unlabeled = Main.getPersonFrameSet(new File("Project/filtered_train"));
 		LabeledFrameSet labeled = Main.getLabeledPersonFrameSet(new File("Project/labeled_train"));
-		
+		Codebook codebook = ClassifierFactory.getCodebook(unlabeled);
+		CodebookClassifier classifier = ClassifierFactory.createPersonClassifier(codebook,labeled);
 		
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1e-9;
 		System.out.println("Finished after " + elapsedTimeInSec + " seconds.");
@@ -48,7 +50,8 @@ public class Main {
 		FrameSet unlabeled = Main.getWalkFrameSet(new File("Project/train"));
 		//Second read all labeled train data in memory
 		LabeledFrameSet labeled = Main.getLabeledWalkFrameSet(new File("Project/labeled_train"));
-		CodebookClassifier classifier = ClassifierFactory.createWalkClassifier(labeled, unlabeled);
+		Codebook codebook = ClassifierFactory.getCodebook(unlabeled);
+		CodebookClassifier classifier = ClassifierFactory.createWalkClassifier(codebook,labeled);
 		Main.writeFilteredWalkData(classifier);
 	}
 	

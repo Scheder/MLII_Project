@@ -86,13 +86,9 @@ public abstract class Data {
 		this.instances.setClass(classAttr);
 	}
 	
-	public void toArff(final String file) throws IOException {
-		this.toArff(new File(file));
-	}
-	
-	public void toArff(final File file) throws IOException {
+	public static void toArff(final File file, final Instances instances) throws IOException {
 		ArffSaver saver = new ArffSaver();
-		saver.setInstances(this.instances);
+		saver.setInstances(instances);
 		saver.setFile(file);
 		saver.setDestination(file);
 		saver.writeBatch();

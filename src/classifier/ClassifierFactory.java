@@ -23,7 +23,6 @@ import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.converters.ArffSaver;
 import codebook.Codebook;
 import codebook.CodebookFactory;
 import data.FrameSet;
@@ -32,39 +31,58 @@ import data.LabeledFrameSet;
 public class ClassifierFactory {
 	
 	public static CodebookClassifier createWalkClassifier(
-			LabeledFrameSet labeled, FrameSet unlabeled) throws Exception{
-		
-		Codebook codebook = ClassifierFactory.getCodebook(unlabeled);
-		// Initialize optimal code book.
-		//Codebook codebook = initCodebook.getMostInformative();
-		
-		codebook = codebook.getMostInformativeSubset();
-		
-		// Initialize feature set.
-		// for each vector in labeled dataset
-		// minimize activation vectors
-		// add to classifier with labeled vector
+			Codebook codebook, LabeledFrameSet labeled) throws Exception {
 		
 		FrameSet activations = codebook.activate(labeled);
 		LabeledFrameSet labeledActivations = 
 				activations.labelFrameSet(labeled.getLabelList());
 		
-		//TODO change back to labeledactivations
 		FastVector walkingValues = new FastVector(2);
 		walkingValues.addElement("Yes");
 		walkingValues.addElement("No");
 		Instances trainSet = ClassifierFactory.activationsToInstances(
 				labeledActivations, "walking", walkingValues);
 		
-		ArffSaver saver = new ArffSaver();
-		saver.setInstances(trainSet);
-		File file = new File("test.arff");
-		saver.setFile(file);
-		saver.setDestination(file);
-		saver.writeBatch();
+		//Create array of classifiers
+		//TODO use options for classifiers and add classifiers
+		Classifier smo = new SMO();
+		Classifier j48 = new J48();
+		
+//		classifiers[0] = svm;
+//		classifiers[1] = j48;
+//		
+//		//TODO use correct options for (meta)classifiers
+//		Vote vote = new Vote();
+//		vote.setClassifiers(classifiers);
+//		
+//		vote.buildClassifier(trainSet);
+//		return vote;
+		//TODO use meta classifier. vote can not work with numeric attribute
+		Classifier classifier = j48;
+		
+		classifier.buildClassifier(trainSet);
+		return new CodebookClassifier(codebook, classifier);
+	}
+	
+	public static CodebookClassifier createPersonClassifier(
+			Codebook codebook, LabeledFrameSet labeled) throws Exception {
+		
+		FrameSet activations = codebook.activate(labeled);
+		LabeledFrameSet labeledActivations = 
+				activations.labelFrameSet(labeled.getLabelList());
+		
+		FastVector personValues = new FastVector(3);
+		personValues.addElement("leander");
+		personValues.addElement("wannes");
+		personValues.addElement("other");
+		Instances trainSet = ClassifierFactory.activationsToInstances(
+				labeledActivations, "person", personValues);
+		
+		
 		
 		//Create array of classifiers
 		//TODO use options for classifiers and add classifiers
+//		Classifier[] classifiers = new Classifier[2];
 		Classifier smo = new SMO();
 		Classifier j48 = new J48();
 		
@@ -89,19 +107,20 @@ public class ClassifierFactory {
 		//TODO get statistics, confusion matrix etc.
 	}
 	
-	private static Codebook getCodebook(FrameSet unlabeled) 
+	public static Codebook getCodebook(FrameSet unlabeled) 
 			throws ClassNotFoundException, IOException {
 		File file = new File("codebook.ser");
 		if (file.exists()) {
-			return ClassifierFactory.deserializeCodebook();
+			Codebook codebook = ClassifierFactory.deserializeCodebook();
+			return codebook.getMostInformativeSubset();
 		}//TODO remove after testing
 		
 		// Fast code book learning.
 		// TODO: choose values, or make value picker.
 		String partitionStyle = "partitionSize";
 		int partitionOption = 50;
-		double convergenceThreshold = 0.5;
-		double alpha = 0.5;
+		double convergenceThreshold = 0.1;
+		double alpha = 0.9;
 		int basisSize = 256;
 		
 		/**
@@ -109,9 +128,7 @@ public class ClassifierFactory {
 		 */
 		int subsetSize = 500;
 		basisSize = 128;
-		convergenceThreshold = 0.02;
-		ArrayList<ArrayRealVector> subset = 
-				new ArrayList<ArrayRealVector>(subsetSize);
+		ArrayList<ArrayRealVector> subset = new ArrayList<ArrayRealVector>(subsetSize);
 		for(int i = 0; i < subsetSize; i++){
 			subset.add(unlabeled.getFrame(i));
 		}
@@ -120,9 +137,10 @@ public class ClassifierFactory {
 		 * DELETE AFTER TESTING!!
 		 */
 		
-		Codebook codebook = CodebookFactory.newCodebook(unlabeled, 
-				partitionStyle, partitionOption, basisSize, 
-				convergenceThreshold, alpha);
+		Codebook codebook = CodebookFactory.newCodebook(unlabeled, partitionStyle, partitionOption, basisSize, convergenceThreshold, alpha);
+		
+		codebook = codebook.getMostInformativeSubset();
+		
 		ClassifierFactory.serializeCodebook(codebook);//TODO remove after testing
 		return codebook;
 	}
@@ -202,7 +220,7 @@ public class ClassifierFactory {
 		return instances;
 	}
 	
-	private static void serializeCodebook(Codebook codebook) throws IOException{
+	private static void serializeCodebook(Codebook codebook) throws IOException {
 		OutputStream file = new FileOutputStream("codebook.ser");
 		OutputStream buffer = new BufferedOutputStream(file);
 		ObjectOutput output = new ObjectOutputStream(buffer);
