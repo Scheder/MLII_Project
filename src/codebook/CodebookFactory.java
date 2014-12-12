@@ -14,6 +14,8 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 
+import main.Main;
+
 import org.apache.commons.math3.linear.ArrayRealVector;
 
 import data.FrameSet;
@@ -72,7 +74,7 @@ public class CodebookFactory {
 	 */
 	public static Codebook getWalkCodebook() throws Exception {
 		// TODO if file not exists, error should be shown
-		Codebook codebook = deserializeCodebook("codebook.ser");
+		Codebook codebook = deserializeCodebook(Main.walkCodebookFile);
 		return codebook.getMostInformativeSubset();
 	}
 
@@ -84,7 +86,7 @@ public class CodebookFactory {
 	 */
 	public static Codebook getPersonCodebook() throws Exception {
 		// TODO if file not exists, error should be shown
-		Codebook codebook = deserializeCodebook("codebook.ser");
+		Codebook codebook = deserializeCodebook(Main.personCodebookFile);
 		return codebook.getMostInformativeSubset();
 	}
 	
@@ -115,7 +117,7 @@ public class CodebookFactory {
 	 * @throws Exception
 	 */
 	public static Codebook getCodebook(FrameSet unlabeled, boolean small) {
-		String fileName = "codebook.ser";
+		String fileName = Main.walkCodebookFile;
 		File file = new File(fileName);
 		if (file.exists()) {
 			try {

@@ -21,8 +21,8 @@ import data.WalkData;
 
 public class Main {
 
-	final static String walkCodebookFile = "codebook.ser";
-	final static String personCodebookFile = "codebook.ser";
+	final static public String walkCodebookFile = "backup_codebook.ser";
+	final static public String personCodebookFile = "backup_codebook.ser";
 	
 	/**
 	 * FilenameFilter selecting CSV filenames.
@@ -40,13 +40,14 @@ public class Main {
 		long start = System.nanoTime();
 		//TODO pretty print exception
 
-		Main.labelTestData();
+		Main.filterAndEvaluateCodebooks();
+		Main.labelTestData("Project/test");
 		
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1e-9;
 		System.out.println("Finished after " + elapsedTimeInSec + " seconds.");
 	}
 	
-	private static void labelTestData() throws Exception {
+	private static void labelTestData(final String folder) throws Exception {
 		//Read all test data
 		LabeledFrameSet walkLabeled = 
 				Main.getLabeledWalkFrameSet("Project/labeled_train");
@@ -56,7 +57,7 @@ public class Main {
 		CodebookClassifier classifier = 
 				ClassifierFactory.
 				createWalkClassifier(walkCodebook, walkLabeled);
-		Main.writeFilteredWalkData(classifier,"Project/test");
+		Main.writeFilteredWalkData(classifier,folder);
 		
 		LabeledFrameSet personLabeled =
 				Main.getLabeledPersonFrameSet("Project/labeled_train");
