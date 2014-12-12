@@ -32,17 +32,17 @@ public class Main {
 		long start = System.nanoTime();
 
 		/** PERSON DATA **/
-		FrameSet unlabeled = Main.getPersonFrameSet(new File("Project/filtered_train"));
-		LabeledFrameSet labeled = Main.getLabeledPersonFrameSet(new File("Project/labeled_train"));
+		//FrameSet unlabeled = Main.getPersonFrameSet(new File("Project/filtered_train"));
+		//LabeledFrameSet labeled = Main.getLabeledPersonFrameSet(new File("Project/labeled_train"));
 		
 		/** WALKING DATA **/
-		//FrameSet unlabeled = Main.getWalkFrameSet(new File("Project/train"));
-		//LabeledFrameSet labeled = Main.getLabeledWalkFrameSet(new File("Project/labeled_train"));
+		FrameSet unlabeled = Main.getWalkFrameSet(new File("Project/train"));
+		LabeledFrameSet labeled = Main.getLabeledWalkFrameSet(new File("Project/labeled_train"));
 		
 		CodebookClassifier classifier = ClassifierFactory.createWalkClassifier(labeled, unlabeled);
 		//TODO do crossvalidation etc
 		
-		//Main.writeFilteredWalkData(classifier);
+		Main.writeFilteredWalkData(classifier);
 		
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1e-9;
 		System.out.println("Finished after " + elapsedTimeInSec + " seconds.");
