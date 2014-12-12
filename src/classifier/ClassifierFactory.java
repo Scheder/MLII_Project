@@ -106,7 +106,7 @@ public class ClassifierFactory {
 		 * TAKE SUBSET FOR TESTING
 		 */
 		int subsetSize = 500;
-		basisSize = 64;
+		basisSize = 128;
 		convergenceThreshold = 0.02;
 		ArrayList<ArrayRealVector> subset = new ArrayList<ArrayRealVector>(subsetSize);
 		for(int i = 0; i < subsetSize; i++){

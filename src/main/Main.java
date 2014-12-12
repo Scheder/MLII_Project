@@ -31,7 +31,7 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 		long start = System.nanoTime();
 		
-		FrameSet unlabeled = Main.getPersonFrameSet(new File("Project/filtered_train"));
+		FrameSet unlabeled = Main.getPersonFrameSet(new File("Project/train"));
 		LabeledFrameSet labeled = Main.getLabeledPersonFrameSet(new File("Project/labeled_train"));
 		CodebookClassifier classifier = ClassifierFactory.createWalkClassifier(labeled, unlabeled);
 		//TODO do crossvalidation etc
