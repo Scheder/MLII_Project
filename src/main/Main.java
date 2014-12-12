@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
+import weka.core.FastVector;
 import codebook.Codebook;
 import classifier.ClassifierFactory;
 import classifier.CodebookClassifier;
@@ -33,26 +34,36 @@ public class Main {
 		long start = System.nanoTime();
 
 		/** WALK DATA **/
-		//Main.filterWalkData();
+		//First read all unlabeled train data in memory
+		FrameSet walkUnlabeled = 
+				Main.getWalkFrameSet(new File("Project/train"));
+		//Second read all labeled train data in memory
+		LabeledFrameSet walkLabeled = 
+				Main.getLabeledWalkFrameSet(new File("Project/labeled_train"));
+		Codebook walkCodebook = ClassifierFactory.getCodebook(walkUnlabeled);
+		CodebookClassifier walkClassifier = 
+				ClassifierFactory.createWalkClassifier(walkCodebook,walkLabeled);
+		//Main.writeFilteredWalkData(walkClassifier);
 		
 		/** PERSON DATA **/
-		FrameSet unlabeled = Main.getPersonFrameSet(new File("Project/filtered_train"));
-		LabeledFrameSet labeled = Main.getLabeledPersonFrameSet(new File("Project/labeled_train"));
-		Codebook codebook = ClassifierFactory.getCodebook(unlabeled);
-		CodebookClassifier classifier = ClassifierFactory.createPersonClassifier(codebook,labeled);
+		FrameSet personUnlabeled = 
+				Main.getPersonFrameSet(
+						new File("Project/filtered_train"));
+		LabeledFrameSet personLabeled = 
+				Main.getLabeledPersonFrameSet(
+						new File("Project/labeled_train"));
+		Codebook personCodebook = ClassifierFactory.getCodebook(personUnlabeled);
+		CodebookClassifier personClassifier = 
+				ClassifierFactory.createPersonClassifier(personCodebook,personLabeled);
+		
+		FastVector classValues = new FastVector(3);
+		classValues.addElement("wannes");
+		classValues.addElement("leander");
+		classValues.addElement("other");
+		personClassifier.evaluate(personLabeled, "person", classValues);
 		
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1e-9;
 		System.out.println("Finished after " + elapsedTimeInSec + " seconds.");
-	}
-	
-	public static void filterWalkData() throws Exception {
-		//First read all unlabeled train data in memory
-		FrameSet unlabeled = Main.getWalkFrameSet(new File("Project/train"));
-		//Second read all labeled train data in memory
-		LabeledFrameSet labeled = Main.getLabeledWalkFrameSet(new File("Project/labeled_train"));
-		Codebook codebook = ClassifierFactory.getCodebook(unlabeled);
-		CodebookClassifier classifier = ClassifierFactory.createWalkClassifier(codebook,labeled);
-		Main.writeFilteredWalkData(classifier);
 	}
 	
 	private static FrameSet getPersonFrameSet(final File folder) {		
@@ -123,7 +134,8 @@ public class Main {
 		return new LabeledFrameSet(frames, labels);
 	}
 	
-	private static void writeFilteredWalkData(CodebookClassifier classifier) throws Exception {
+	private static void writeFilteredWalkData(CodebookClassifier classifier)
+			throws Exception {
 		File folder = new File("Project/train");
 		for (File file : folder.listFiles(new Main.CSVFilter())) {
 			WalkData d = new WalkData();

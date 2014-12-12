@@ -101,11 +101,6 @@ public class ClassifierFactory {
 		return new CodebookClassifier(codebook, classifier);
 	}
 	
-	public static void testClassifier(Classifier classifier, FrameSet testSet) {
-		//Transform FrameSet to Instances
-		//TODO get statistics, confusion matrix etc.
-	}
-	
 	public static Codebook getCodebook(FrameSet unlabeled) 
 			throws Exception {
 		File file = new File("codebook.ser");
