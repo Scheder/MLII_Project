@@ -15,7 +15,7 @@ public class PersonData extends Data {
 	public PersonData(final Instances instances) {
 		super(instances);
 		this.className = "person";
-		this.classValues = new FastVector(2);
+		this.classValues = new FastVector(3);
 		this.classValues.addElement("wannes");
 		this.classValues.addElement("leander");
 		this.classValues.addElement("other");
