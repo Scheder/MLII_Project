@@ -10,6 +10,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 
 import weka.core.FastVector;
 import codebook.Codebook;
+import codebook.CodebookFactory;
 import classifier.ClassifierFactory;
 import classifier.CodebookClassifier;
 import data.Data;
@@ -20,6 +21,12 @@ import data.WalkData;
 
 public class Main {
 
+	final static String walkCodebookFile = "codebook.ser";
+	final static String personCodebookFile = "codebook.ser";
+	
+	/**
+	 * FilenameFilter selecting CSV filenames.
+	 */
 	private static class CSVFilter implements FilenameFilter {
 
 		@Override
@@ -29,44 +36,60 @@ public class Main {
 		
 	}
 	
-	//TODO pretty print exception
 	public static void main(String[] args) throws Exception {
 		long start = System.nanoTime();
+		//TODO pretty print exception
 
+		Main.labelTestData();
+		
+		double elapsedTimeInSec = (System.nanoTime() - start) * 1e-9;
+		System.out.println("Finished after " + elapsedTimeInSec + " seconds.");
+	}
+	
+	private static void labelTestData() throws Exception {
+		//Read all test data
+		FrameSet testSet = Main.getWalkFrameSet("Project/test");
+		LabeledFrameSet labeled = 
+				Main.getLabeledWalkFrameSet("Project/labeled_train");
+		//Get codebook
+		Codebook codebook = 
+				ClassifierFactory.deserializeCodebook(Main.walkCodebookFile);
+		CodebookClassifier classifier = 
+				ClassifierFactory.createWalkClassifier(codebook, labeled);
+	}
+	
+	private static void filterAndEvaluateCodebooks() throws Exception {
 		/** WALK DATA **/
 		//First read all unlabeled train data in memory
 		FrameSet walkUnlabeled = 
-				Main.getWalkFrameSet(new File("Project/train"));
+				Main.getWalkFrameSet("Project/train");
 		//Second read all labeled train data in memory
 		LabeledFrameSet walkLabeled = 
-				Main.getLabeledWalkFrameSet(new File("Project/labeled_train"));
-		Codebook walkCodebook = ClassifierFactory.getCodebook(walkUnlabeled);
+				Main.getLabeledWalkFrameSet("Project/labeled_train");
+		Codebook walkCodebook = CodebookFactory.getCodebook(walkUnlabeled);
 		CodebookClassifier walkClassifier = 
 				ClassifierFactory.createWalkClassifier(walkCodebook,walkLabeled);
-		//Main.writeFilteredWalkData(walkClassifier);
+		Main.writeFilteredWalkData(walkClassifier);
 		
 		/** PERSON DATA **/
 		FrameSet personUnlabeled = 
-				Main.getPersonFrameSet(
-						new File("Project/filtered_train"));
+				Main.getPersonFrameSet("Project/filtered_train");
 		LabeledFrameSet personLabeled = 
-				Main.getLabeledPersonFrameSet(
-						new File("Project/labeled_train"));
-		Codebook personCodebook = ClassifierFactory.getCodebook(personUnlabeled);
+				Main.getLabeledPersonFrameSet("Project/labeled_train");
+		Codebook personCodebook = CodebookFactory.getCodebook(personUnlabeled);
 		CodebookClassifier personClassifier = 
-				ClassifierFactory.createPersonClassifier(personCodebook,personLabeled);
+				ClassifierFactory.
+				createPersonClassifier(personCodebook,personLabeled);
 		
 		FastVector classValues = new FastVector(3);
 		classValues.addElement("wannes");
 		classValues.addElement("leander");
 		classValues.addElement("other");
 		personClassifier.evaluate(personLabeled, "person", classValues);
-		
-		double elapsedTimeInSec = (System.nanoTime() - start) * 1e-9;
-		System.out.println("Finished after " + elapsedTimeInSec + " seconds.");
 	}
 	
-	private static FrameSet getPersonFrameSet(final File folder) {		
+	private static FrameSet getPersonFrameSet(final String fileName) {
+		final File folder = new File(fileName);
 		//Get all CSV files
 		List<ArrayRealVector> frames = new ArrayList<ArrayRealVector>();
 		for (File file : folder.listFiles(new Main.CSVFilter())) {
@@ -83,7 +106,9 @@ public class Main {
 		return new FrameSet(frames);
 	}
 	
-	private static LabeledFrameSet getLabeledPersonFrameSet(final File folder) {
+	private static LabeledFrameSet getLabeledPersonFrameSet(
+			final String fileName) {
+		final File folder = new File(fileName);
 		//Get all CSV files
 		List<ArrayRealVector> frames = new ArrayList<ArrayRealVector>();
 		List<String> labels = new ArrayList<String>();
@@ -101,7 +126,8 @@ public class Main {
 		return new LabeledFrameSet(frames, labels);
 	}
 	
-	private static FrameSet getWalkFrameSet(final File folder) {
+	private static FrameSet getWalkFrameSet(final String fileName) {
+		final File folder = new File(fileName);
 		//Get all CSV files
 		List<ArrayRealVector> frames = new ArrayList<ArrayRealVector>();
 		for (File file : folder.listFiles(new Main.CSVFilter())) {
@@ -116,7 +142,9 @@ public class Main {
 		return new FrameSet(frames);
 	}
 	
-	private static LabeledFrameSet getLabeledWalkFrameSet(final File folder) {
+	private static LabeledFrameSet getLabeledWalkFrameSet(
+			final String fileName) {
+		final File folder = new File(fileName);
 		//Get all CSV files
 		List<ArrayRealVector> frames = new ArrayList<ArrayRealVector>();
 		List<String> labels = new ArrayList<String>();

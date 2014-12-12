@@ -1,21 +1,5 @@
 package classifier;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-
-import org.apache.commons.math3.linear.ArrayRealVector;
-
 import weka.classifiers.Classifier;
 import weka.classifiers.functions.SMO;
 import weka.classifiers.trees.J48;
@@ -24,25 +8,40 @@ import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 import codebook.Codebook;
-import codebook.CodebookFactory;
 import data.FrameSet;
 import data.LabeledFrameSet;
 
+/**
+ * Class used to train classifiers.
+ *
+ */
 public class ClassifierFactory {
 	
+	/**
+	 * Given a codebook and a labeled frame set, this method trains a
+	 * classifier to distinguish between walking and other activities.
+	 * 
+	 * @param codebook	A codebook.
+	 * @param labeled	Labeled frames to activate the codebook.
+	 * @return CodebookClassifier object.
+	 * @throws Exception
+	 */
 	public static CodebookClassifier createWalkClassifier(
 			Codebook codebook, LabeledFrameSet labeled) throws Exception {
 		
+		// Get activations for the labeled frames.
 		FrameSet activations = codebook.activate(labeled);
+		// Label the activations.
 		LabeledFrameSet labeledActivations = activations.labelFrameSet(labeled.getLabelList());
 		
+		// Attribute vector.
 		FastVector walkingValues = new FastVector(2);
 		walkingValues.addElement("Yes");
 		walkingValues.addElement("No");
 		Instances trainSet = ClassifierFactory.activationsToInstances(
 				labeledActivations, "walking", walkingValues);
 		
-		//Create array of classifiers
+		
 		//TODO use options for classifiers and add classifiers
 		Classifier smo = new SMO();
 		Classifier j48 = new J48();
@@ -59,17 +58,31 @@ public class ClassifierFactory {
 		//TODO use meta classifier. vote can not work with numeric attribute
 		Classifier classifier = j48;
 		
+		// Use the training set composed of labeled activations to build
+		// the classifier.
 		classifier.buildClassifier(trainSet);
 		return new CodebookClassifier(codebook, classifier);
 	}
 	
+	/**
+	 * Given a codebook and a labeled frame set, this method trains a
+	 * classifier to distinguish between the gait of different subjects.
+	 * 
+	 * @param codebook	A codebook.
+	 * @param labeled	Labeled frames to activate the codebook.
+	 * @return CodebookClassifier object.
+	 * @throws Exception
+	 */
 	public static CodebookClassifier createPersonClassifier(
 			Codebook codebook, LabeledFrameSet labeled) throws Exception {
 		
+		// Get activations for the labeled frames.
 		FrameSet activations = codebook.activate(labeled);
+		// Label the activations.
 		LabeledFrameSet labeledActivations = 
 				activations.labelFrameSet(labeled.getLabelList());
 		
+		// Attribute vector.
 		FastVector personValues = new FastVector(3);
 		personValues.addElement("leander");
 		personValues.addElement("wannes");
@@ -97,67 +110,10 @@ public class ClassifierFactory {
 		//TODO use meta classifier. vote can not work with numeric attribute
 		Classifier classifier = j48;
 		
+		// Use the training set composed of labeled activations to build
+		// the classifier.
 		classifier.buildClassifier(trainSet);
 		return new CodebookClassifier(codebook, classifier);
-	}
-	
-	public static Codebook getWalkCodebook() throws Exception {
-		//TODO put in other location.
-		//TODO if file not exists, error should be shown
-		Codebook codebook =
-				ClassifierFactory.deserializeCodebook("codebook.ser");
-		return codebook.getMostInformativeSubset();
-	}
-	
-	public static Codebook getPersonCodebook() throws Exception {
-		//TODO put in other location.
-		//TODO if file not exists, error should be shown
-		Codebook codebook = 
-				ClassifierFactory.deserializeCodebook("codebook.ser");
-		return codebook.getMostInformativeSubset();
-	}
-	
-	
-	public static Codebook getCodebook(FrameSet unlabeled) 
-			throws Exception {
-		String fileName = "codebook.ser";
-		File file = new File(fileName);
-		if (file.exists()) {
-			Codebook codebook = ClassifierFactory.deserializeCodebook(fileName);
-			return codebook.getMostInformativeSubset();
-		}//TODO remove after testing
-		
-		// Fast code book learning.
-		// TODO: choose values, or make value picker.
-		String partitionStyle = "partitionSize";
-		int partitionOption = 50;
-		double convergenceThreshold = 0.1;
-		double alpha = 0.9;
-		int basisSize = 256;
-		
-		/**
-		 * TAKE SUBSET FOR TESTING
-		 */
-		int subsetSize = 500;
-		basisSize = 128;
-		ArrayList<ArrayRealVector> subset = 
-				new ArrayList<ArrayRealVector>(subsetSize);
-		for(int i = 0; i < subsetSize; i++){
-			subset.add(unlabeled.getFrame(i));
-		}
-		unlabeled = new FrameSet(subset);
-		/**
-		 * DELETE AFTER TESTING!!
-		 */
-		
-		Codebook codebook = CodebookFactory.newCodebook(
-				unlabeled, partitionStyle, partitionOption, basisSize, 
-				convergenceThreshold, alpha);
-		
-		codebook = codebook.getMostInformativeSubset();
-		
-		ClassifierFactory.serializeCodebook(codebook,fileName);//TODO remove after testing
-		return codebook;
 	}
 	
 	/**
@@ -232,28 +188,5 @@ public class ClassifierFactory {
 		
 		return instances;
 	}
-	
-	private static void serializeCodebook(Codebook codebook,String fileName)
-			throws IOException {
-		OutputStream file = new FileOutputStream(fileName);
-		OutputStream buffer = new BufferedOutputStream(file);
-		ObjectOutput output = new ObjectOutputStream(buffer);
-		try {
-			output.writeObject(codebook);
-		} finally {
-			output.close();
-		}
-	}
-	
-	private static Codebook deserializeCodebook(String fileName)
-			throws IOException, ClassNotFoundException {
-		InputStream file = new FileInputStream(fileName);
-		InputStream buffer = new BufferedInputStream(file);
-		ObjectInput input = new ObjectInputStream (buffer);
-		try {
-			return (Codebook) input.readObject();
-		} finally {
-			input.close();
-		}
-	}
+
 }
