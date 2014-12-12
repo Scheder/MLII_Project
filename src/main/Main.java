@@ -53,7 +53,7 @@ public class Main {
 				Main.getLabeledWalkFrameSet("Project/labeled_train");
 		//Get codebook
 		Codebook codebook = 
-				ClassifierFactory.deserializeCodebook(Main.walkCodebookFile);
+				CodebookFactory.deserializeCodebook(Main.walkCodebookFile);
 		CodebookClassifier classifier = 
 				ClassifierFactory.createWalkClassifier(codebook, labeled);
 	}
