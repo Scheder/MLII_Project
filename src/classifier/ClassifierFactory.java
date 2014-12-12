@@ -31,13 +31,14 @@ import data.LabeledFrameSet;
 
 public class ClassifierFactory {
 	
-	public static CodebookClassifier createWalkClassifier(LabeledFrameSet labeled, FrameSet unlabeled) throws Exception{
+	public static CodebookClassifier createWalkClassifier(
+			LabeledFrameSet labeled, FrameSet unlabeled) throws Exception{
 		
 		Codebook codebook = ClassifierFactory.getCodebook(unlabeled);
 		// Initialize optimal code book.
 		//Codebook codebook = initCodebook.getMostInformative();
 		
-		codebook.getMostInformativeSubset();
+		codebook = codebook.getMostInformativeSubset();
 		
 		// Initialize feature set.
 		// for each vector in labeled dataset
@@ -45,7 +46,8 @@ public class ClassifierFactory {
 		// add to classifier with labeled vector
 		
 		FrameSet activations = codebook.activate(labeled);
-		LabeledFrameSet labeledActivations = activations.labelFrameSet(labeled.getLabelList());
+		LabeledFrameSet labeledActivations = 
+				activations.labelFrameSet(labeled.getLabelList());
 		
 		//TODO change back to labeledactivations
 		FastVector walkingValues = new FastVector(2);
@@ -63,7 +65,6 @@ public class ClassifierFactory {
 		
 		//Create array of classifiers
 		//TODO use options for classifiers and add classifiers
-		Classifier[] classifiers = new Classifier[2];
 		Classifier smo = new SMO();
 		Classifier j48 = new J48();
 		
@@ -88,7 +89,8 @@ public class ClassifierFactory {
 		//TODO get statistics, confusion matrix etc.
 	}
 	
-	private static Codebook getCodebook(FrameSet unlabeled) throws ClassNotFoundException, IOException {
+	private static Codebook getCodebook(FrameSet unlabeled) 
+			throws ClassNotFoundException, IOException {
 		File file = new File("codebook.ser");
 		if (file.exists()) {
 			return ClassifierFactory.deserializeCodebook();
@@ -108,7 +110,8 @@ public class ClassifierFactory {
 		int subsetSize = 500;
 		basisSize = 128;
 		convergenceThreshold = 0.02;
-		ArrayList<ArrayRealVector> subset = new ArrayList<ArrayRealVector>(subsetSize);
+		ArrayList<ArrayRealVector> subset = 
+				new ArrayList<ArrayRealVector>(subsetSize);
 		for(int i = 0; i < subsetSize; i++){
 			subset.add(unlabeled.getFrame(i));
 		}
@@ -117,7 +120,9 @@ public class ClassifierFactory {
 		 * DELETE AFTER TESTING!!
 		 */
 		
-		Codebook codebook = CodebookFactory.newCodebook(unlabeled, partitionStyle, partitionOption, basisSize, convergenceThreshold, alpha);
+		Codebook codebook = CodebookFactory.newCodebook(unlabeled, 
+				partitionStyle, partitionOption, basisSize, 
+				convergenceThreshold, alpha);
 		ClassifierFactory.serializeCodebook(codebook);//TODO remove after testing
 		return codebook;
 	}
@@ -130,7 +135,8 @@ public class ClassifierFactory {
 	 * @param classValues
 	 * @return
 	 */
-	public static Instances activationsToInstances(FrameSet activations,String className, FastVector classValues) {
+	public static Instances activationsToInstances(FrameSet activations,
+			String className, FastVector classValues) {
 		int numOfFrames = activations.size();
 		int numOfBasicVectors = activations.dimension();
 		int numOfAttributes = numOfBasicVectors+1;
@@ -166,7 +172,8 @@ public class ClassifierFactory {
 	 * @param classValues
 	 * @return
 	 */
-	public static Instances activationsToInstances(LabeledFrameSet activations,String className, FastVector classValues) {
+	public static Instances activationsToInstances(LabeledFrameSet activations,
+			String className, FastVector classValues) {
 		int numOfFrames = activations.size();
 		int numOfBasicVectors = activations.dimension();
 		int numOfAttributes = numOfBasicVectors+1;
@@ -195,7 +202,7 @@ public class ClassifierFactory {
 		return instances;
 	}
 	
-	private static void serializeCodebook(Codebook codebook) throws IOException {
+	private static void serializeCodebook(Codebook codebook) throws IOException{
 		OutputStream file = new FileOutputStream("codebook.ser");
 		OutputStream buffer = new BufferedOutputStream(file);
 		ObjectOutput output = new ObjectOutputStream(buffer);
@@ -206,7 +213,8 @@ public class ClassifierFactory {
 		}
 	}
 	
-	private static Codebook deserializeCodebook() throws IOException, ClassNotFoundException {
+	private static Codebook deserializeCodebook() 
+			throws IOException, ClassNotFoundException {
 		InputStream file = new FileInputStream("codebook.ser");
 		InputStream buffer = new BufferedInputStream(file);
 		ObjectInput input = new ObjectInputStream (buffer);
