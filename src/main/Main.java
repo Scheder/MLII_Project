@@ -10,6 +10,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 
 import weka.core.FastVector;
 import codebook.Codebook;
+import codebook.CodebookFactory;
 import classifier.ClassifierFactory;
 import classifier.CodebookClassifier;
 import data.Data;
@@ -20,6 +21,9 @@ import data.WalkData;
 
 public class Main {
 
+	/**
+	 * FilenameFilter selecting CSV filenames.
+	 */
 	private static class CSVFilter implements FilenameFilter {
 
 		@Override
@@ -29,9 +33,9 @@ public class Main {
 		
 	}
 	
-	//TODO pretty print exception
 	public static void main(String[] args) throws Exception {
 		long start = System.nanoTime();
+		//TODO pretty print exception
 
 		/** WALK DATA **/
 		//First read all unlabeled train data in memory
@@ -40,7 +44,7 @@ public class Main {
 		//Second read all labeled train data in memory
 		LabeledFrameSet walkLabeled = 
 				Main.getLabeledWalkFrameSet(new File("Project/labeled_train"));
-		Codebook walkCodebook = ClassifierFactory.getCodebook(walkUnlabeled);
+		Codebook walkCodebook = CodebookFactory.getCodebook(walkUnlabeled);
 		CodebookClassifier walkClassifier = 
 				ClassifierFactory.createWalkClassifier(walkCodebook,walkLabeled);
 		//Main.writeFilteredWalkData(walkClassifier);
@@ -52,9 +56,10 @@ public class Main {
 		LabeledFrameSet personLabeled = 
 				Main.getLabeledPersonFrameSet(
 						new File("Project/labeled_train"));
-		Codebook personCodebook = ClassifierFactory.getCodebook(personUnlabeled);
+		Codebook personCodebook = CodebookFactory.getCodebook(personUnlabeled);
 		CodebookClassifier personClassifier = 
-				ClassifierFactory.createPersonClassifier(personCodebook,personLabeled);
+				ClassifierFactory.
+				createPersonClassifier(personCodebook,personLabeled);
 		
 		FastVector classValues = new FastVector(3);
 		classValues.addElement("wannes");
