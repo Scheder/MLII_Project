@@ -15,18 +15,34 @@ import data.Data;
 import data.FrameSet;
 import data.LabeledFrameSet;
 
+/**
+ * Classifier class incorporating a codebook for feature extraction.
+ *
+ */
 public class CodebookClassifier {
-
 	
 	private Codebook codebook;
 	private Classifier classifier;
 	
+	/**
+	 * Constructor takes a codebook and a classifier and returns an instance of
+	 * the wrapper class CodebookClassifier.
+	 * @param codebook
+	 * @param classifier
+	 */
 	public CodebookClassifier(
 			final Codebook codebook, final Classifier classifier) {
 		this.codebook = codebook;
 		this.classifier = classifier;
 	}
 	
+	/**
+	 * Returns a list of classification labels for a batch of data.
+	 * 
+	 * @param d	Batch of data.
+	 * @return	List of labels.
+	 * @throws Exception
+	 */
 	public List<String> getLabels(final Data d) throws Exception {
 		//Get activations for all frames
 		FrameSet activations = this.codebook.activate(
@@ -44,7 +60,14 @@ public class CodebookClassifier {
 		return labels;
 	}
 	
-	
+	/**
+	 * Cross-validates the classifier for a given labeled set.
+	 * 
+	 * @param labeled
+	 * @param className
+	 * @param classValues
+	 * @throws Exception
+	 */
 	public void evaluate(
 			LabeledFrameSet labeled,String className,FastVector classValues)
 					throws Exception {
