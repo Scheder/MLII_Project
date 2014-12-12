@@ -24,8 +24,11 @@ import data.FrameSet;
  */
 public class CodebookFactory {
 	
-	final static private String walkCodebookFile = "codebook.ser";
-	final static private String personCodebookFile = "codebook.ser";
+	final static private String codebookFolder = "Project/codebooks/";
+	final static private String walkCodebookFile = 
+			codebookFolder+"codebook.ser";
+	final static private String personCodebookFile =
+			codebookFolder+"codebook.ser";
 
 	/**
 	 * Create and learn a new codebook with the giving data.
