@@ -3,10 +3,7 @@ package data;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
@@ -59,8 +56,11 @@ public abstract class Data {
 		this.instances = loader.getDataSet();
 		
 		//Add magnitudes
-		Attribute magAttr = new Attribute("magnitude",4);
-		this.instances.insertAttributeAt(magAttr,4);
+		Attribute magAttr = this.instances.attribute("magnitude");
+		if (magAttr == null) {
+			magAttr = new Attribute("magnitude",4);
+			this.instances.insertAttributeAt(magAttr, 4);
+		}
 		
 		Instance instance;
 		Double x,y,z,mag;
@@ -128,41 +128,7 @@ public abstract class Data {
 		return list;
 	}
 	
-	public List<String> getLabels() {
-		final int size = this.numOfWindows();
-		final List<String> labels = new ArrayList<String>(size);
-		final Attribute classAttr = this.instances.classAttribute();
-
-		//Iterate windows
-		for (int i = 0; i < size; i ++) {
-			//Prepare voting map
-			Map<String, Integer> votingMap = new HashMap<String, Integer>();
-			Enumeration<String> e = this.instances.classAttribute().enumerateValues();
-			while (e.hasMoreElements()) {
-				votingMap.put(e.nextElement(),0);
-			}
-			
-			Data window = this.getWindow(i);
-			//Get majority label
-			for (int j = 0; j < Data.windowSize; j++) {
-				String label = window.instances.instance(j).stringValue(classAttr);
-				int value = votingMap.get(label);
-				votingMap.put(label, value+1);
-			}
-			//Check the majority vote
-			String winnerLabel = "";
-			int winnerValue = 0;
-			for (String label : votingMap.keySet()) {
-				int value = votingMap.get(label);
-				if (value > winnerValue) {
-					winnerValue = value;
-					winnerLabel = label;
-				}
-			}
-			labels.add(winnerLabel);
-		}
-		return labels;
-	}
+	abstract public List<String> getLabels();	
 	
 	@Override
 	public String toString() {
@@ -179,8 +145,8 @@ public abstract class Data {
 	
 	
 	public static void main(String[] args) throws IOException {
-		Data d = new WalkData();
-		d.readCSV("Project/train/walk_1_other.csv");
+//		Data d = new WalkData();
+//		d.readCSV("Project/train/walk_1_other.csv");
 //		d.toArff("test");
 //		Data d = Data.readCSV("Project/labeled_walking_train/walk_45_other.csv");
 //		Data d1 = Data.readCSV("Project/train/walk_1_other.csv");
@@ -188,11 +154,11 @@ public abstract class Data {
 //		System.out.println(d);
 //		System.out.println(d.toArrayRealVector());
 //		d.visualize();
-		System.out.println(d);
-		for (int i = 0; i < d.numOfWindows(); i++) {
-			System.out.println(d.getWindow(i));
-		}
-//		WalkData.visualizeFile();
+//		System.out.println(d);
+//		for (int i = 0; i < d.numOfWindows(); i++) {
+//			System.out.println(d.getWindow(i));
+//		}
+		WalkData.visualizeFile();
 	}
 	
 }

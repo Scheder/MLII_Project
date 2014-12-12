@@ -6,7 +6,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -23,6 +27,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.ui.ApplicationFrame;
 import org.jfree.ui.RefineryUtilities;
 
+import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -194,6 +199,43 @@ public class WalkData extends Data {
 	public int numOfWindows() {
 		if (this.instances.numInstances() < Data.windowSize) return 0;
 		return (this.instances.numInstances() - Data.windowSize) / Data.instancesBetweenWindows + 1;
+	}
+
+	@Override
+	public List<String> getLabels() {
+		final int size = this.numOfWindows();
+		final List<String> labels = new ArrayList<String>(size);
+		final Attribute classAttr = this.instances.classAttribute();
+
+		//Iterate windows
+		for (int i = 0; i < size; i ++) {
+			//Prepare voting map
+			Map<String, Integer> votingMap = new HashMap<String, Integer>();
+			Enumeration<String> e = this.instances.classAttribute().enumerateValues();
+			while (e.hasMoreElements()) {
+				votingMap.put(e.nextElement(),0);
+			}
+			
+			Data window = this.getWindow(i);
+			//Get majority label
+			for (int j = 0; j < Data.windowSize; j++) {
+				String label = window.instances.instance(j).stringValue(classAttr);
+				int value = votingMap.get(label);
+				votingMap.put(label, value+1);
+			}
+			//Check the majority vote
+			String winnerLabel = "";
+			int winnerValue = 0;
+			for (String label : votingMap.keySet()) {
+				int value = votingMap.get(label);
+				if (value > winnerValue) {
+					winnerValue = value;
+					winnerLabel = label;
+				}
+			}
+			labels.add(winnerLabel);
+		}
+		return labels;
 	}
 	
 }
