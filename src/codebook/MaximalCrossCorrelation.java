@@ -13,8 +13,11 @@ public class MaximalCrossCorrelation {
 		
 		for(int t = 0; t < 2*n + 1; t++){
 			double correlation = 0;
+			//System.out.println("From " + Math.max(0, t - n) + " to " + Math.min(n, t));
 			for(int tau = Math.max(0, t - n); tau < Math.min(n, t); tau++){
 				correlation += v1.getEntry(tau)*v2.getEntry(n+tau-t);
+				//stats.incrCoordCount();
+				//stats.incrCoordCount();
 			}
 			if(correlation > maxCorrelation){
 				maxCorrelation = correlation;

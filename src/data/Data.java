@@ -18,11 +18,9 @@ public abstract class Data {
 	
 	//All windows are assumed the same size
 	protected static final int sampleRate = 50; //In Hz
-	protected static final int windowSize = 
-			1 * Data.sampleRate; //Instances per window
-	protected static final Double overlap = 0.5; //Percentage of window overlap
-	protected static final int instancesBetweenWindows = 
-			((Double)((1-Data.overlap) * Data.windowSize)).intValue();
+	protected static final int windowSize = 1 * Data.sampleRate; //Number of instances in window
+	protected static final Double overlap = 0.5; //In percentage of window overlap
+	protected static final int instancesBetweenWindows = ((Double)((1-Data.overlap) * Data.windowSize)).intValue();
 	
 	protected Instances instances;
 	protected File file;
