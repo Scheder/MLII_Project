@@ -100,6 +100,8 @@ public class CodebookClassifier {
 				list.add(this.classifyFile(file));
 			} catch (IOException e) {
 				// If something goes wrong, continue to next file
+			} catch (RuntimeException e) {
+			//Files with only a header are ignored
 			}
 		}
 		return list;
