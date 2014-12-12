@@ -101,11 +101,29 @@ public class ClassifierFactory {
 		return new CodebookClassifier(codebook, classifier);
 	}
 	
+	public static Codebook getWalkCodebook() throws Exception {
+		//TODO put in other location.
+		//TODO if file not exists, error should be shown
+		Codebook codebook =
+				ClassifierFactory.deserializeCodebook("codebook.ser");
+		return codebook.getMostInformativeSubset();
+	}
+	
+	public static Codebook getPersonCodebook() throws Exception {
+		//TODO put in other location.
+		//TODO if file not exists, error should be shown
+		Codebook codebook = 
+				ClassifierFactory.deserializeCodebook("codebook.ser");
+		return codebook.getMostInformativeSubset();
+	}
+	
+	
 	public static Codebook getCodebook(FrameSet unlabeled) 
 			throws Exception {
-		File file = new File("codebook.ser");
+		String fileName = "codebook.ser";
+		File file = new File(fileName);
 		if (file.exists()) {
-			Codebook codebook = ClassifierFactory.deserializeCodebook();
+			Codebook codebook = ClassifierFactory.deserializeCodebook(fileName);
 			return codebook.getMostInformativeSubset();
 		}//TODO remove after testing
 		
@@ -122,7 +140,8 @@ public class ClassifierFactory {
 		 */
 		int subsetSize = 500;
 		basisSize = 128;
-		ArrayList<ArrayRealVector> subset = new ArrayList<ArrayRealVector>(subsetSize);
+		ArrayList<ArrayRealVector> subset = 
+				new ArrayList<ArrayRealVector>(subsetSize);
 		for(int i = 0; i < subsetSize; i++){
 			subset.add(unlabeled.getFrame(i));
 		}
@@ -131,11 +150,13 @@ public class ClassifierFactory {
 		 * DELETE AFTER TESTING!!
 		 */
 		
-		Codebook codebook = CodebookFactory.newCodebook(unlabeled, partitionStyle, partitionOption, basisSize, convergenceThreshold, alpha);
+		Codebook codebook = CodebookFactory.newCodebook(
+				unlabeled, partitionStyle, partitionOption, basisSize, 
+				convergenceThreshold, alpha);
 		
 		codebook = codebook.getMostInformativeSubset();
 		
-		ClassifierFactory.serializeCodebook(codebook);//TODO remove after testing
+		ClassifierFactory.serializeCodebook(codebook,fileName);//TODO remove after testing
 		return codebook;
 	}
 	
@@ -212,8 +233,9 @@ public class ClassifierFactory {
 		return instances;
 	}
 	
-	private static void serializeCodebook(Codebook codebook) throws IOException {
-		OutputStream file = new FileOutputStream("codebook.ser");
+	private static void serializeCodebook(Codebook codebook,String fileName)
+			throws IOException {
+		OutputStream file = new FileOutputStream(fileName);
 		OutputStream buffer = new BufferedOutputStream(file);
 		ObjectOutput output = new ObjectOutputStream(buffer);
 		try {
@@ -223,8 +245,9 @@ public class ClassifierFactory {
 		}
 	}
 	
-	private static Codebook deserializeCodebook() throws IOException, ClassNotFoundException {
-		InputStream file = new FileInputStream("codebook.ser");
+	private static Codebook deserializeCodebook(String fileName)
+			throws IOException, ClassNotFoundException {
+		InputStream file = new FileInputStream(fileName);
 		InputStream buffer = new BufferedInputStream(file);
 		ObjectInput input = new ObjectInputStream (buffer);
 		try {
