@@ -234,7 +234,6 @@ public class Codebook implements Serializable {
         for(int i = 0; i < numClusters; i++){
         	
         	ArrayList<RealVector> currList = res.get(i);
-        	System.out.println();
         	
         	// Sort.
         	Collections.sort(currList, new java.util.Comparator<RealVector>() {

@@ -121,7 +121,6 @@ public class CodebookClassifier {
 				activations, data.getClassName(), classValues);
 		//Prepare voting map
 		Map<String, Integer> votingMap = new HashMap<String, Integer>();
-		List<String> labels = new ArrayList<String>(instances.numInstances());
 		for (int i = 0; i < classValues.size(); i++) {
 			votingMap.put((String)classValues.elementAt(i), 0);
 		}
