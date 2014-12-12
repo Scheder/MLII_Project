@@ -108,7 +108,7 @@ public class CodebookClassifier {
 	}
 	
 	public String classifyFile(final File file) throws Exception {
-		System.out.println("Classifying " + file.getName());
+		//System.out.println("Classifying " + file.getName());
 		PersonData data = new PersonData();
 		data.readCSV(file);
 		//Turn instances into frameset

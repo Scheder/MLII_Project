@@ -253,8 +253,6 @@ public class Codebook implements Serializable {
         	
         }
         
-        System.out.println(newBasisVectors.size());
-        
         // Return better codebook.
         return new Codebook(newBasisVectors, this.alpha);
 	}

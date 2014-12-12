@@ -28,11 +28,13 @@ public class ClassifierFactory {
 	 */
 	public static CodebookClassifier createWalkClassifier(
 			Codebook codebook, LabeledFrameSet labeled) throws Exception {
+		System.out.println("Creating walk classifier...");
 		
 		// Get activations for the labeled frames.
 		FrameSet activations = codebook.activate(labeled);
 		// Label the activations.
-		LabeledFrameSet labeledActivations = activations.labelFrameSet(labeled.getLabelList());
+		LabeledFrameSet labeledActivations = 
+				activations.labelFrameSet(labeled.getLabelList());
 		
 		// Attribute vector.
 		FastVector walkingValues = new FastVector(2);
@@ -75,6 +77,7 @@ public class ClassifierFactory {
 	 */
 	public static CodebookClassifier createPersonClassifier(
 			Codebook codebook, LabeledFrameSet labeled) throws Exception {
+		System.out.println("Creating person classifier...");
 		
 		// Get activations for the labeled frames.
 		FrameSet activations = codebook.activate(labeled);
@@ -124,7 +127,8 @@ public class ClassifierFactory {
 	 * @param classValues
 	 * @return
 	 */
-	public static Instances activationsToInstances(FrameSet activations,String className, FastVector classValues) {
+	public static Instances activationsToInstances(
+			FrameSet activations,String className, FastVector classValues) {
 		int numOfFrames = activations.size();
 		int numOfBasicVectors = activations.dimension();
 		int numOfAttributes = numOfBasicVectors+1;
@@ -160,7 +164,9 @@ public class ClassifierFactory {
 	 * @param classValues
 	 * @return
 	 */
-	public static Instances activationsToInstances(LabeledFrameSet activations,String className, FastVector classValues) {
+	public static Instances activationsToInstances(
+			LabeledFrameSet activations,
+			String className, FastVector classValues) {
 		int numOfFrames = activations.size();
 		int numOfBasicVectors = activations.dimension();
 		int numOfAttributes = numOfBasicVectors+1;

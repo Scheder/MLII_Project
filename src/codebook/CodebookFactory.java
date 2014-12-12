@@ -14,8 +14,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 
-import main.Main;
-
 import org.apache.commons.math3.linear.ArrayRealVector;
 
 import data.FrameSet;
@@ -25,6 +23,9 @@ import data.FrameSet;
  *
  */
 public class CodebookFactory {
+	
+	final static private String walkCodebookFile = "codebook.ser";
+	final static private String personCodebookFile = "codebook.ser";
 
 	/**
 	 * Create and learn a new codebook with the giving data.
@@ -74,7 +75,7 @@ public class CodebookFactory {
 	 */
 	public static Codebook getWalkCodebook() throws Exception {
 		// TODO if file not exists, error should be shown
-		Codebook codebook = deserializeCodebook(Main.walkCodebookFile);
+		Codebook codebook = deserializeCodebook(walkCodebookFile);
 		return codebook.getMostInformativeSubset();
 	}
 
@@ -86,7 +87,7 @@ public class CodebookFactory {
 	 */
 	public static Codebook getPersonCodebook() throws Exception {
 		// TODO if file not exists, error should be shown
-		Codebook codebook = deserializeCodebook(Main.personCodebookFile);
+		Codebook codebook = deserializeCodebook(personCodebookFile);
 		return codebook.getMostInformativeSubset();
 	}
 	
@@ -117,7 +118,7 @@ public class CodebookFactory {
 	 * @throws Exception
 	 */
 	public static Codebook getCodebook(FrameSet unlabeled, boolean small) {
-		String fileName = Main.walkCodebookFile;
+		String fileName = walkCodebookFile;
 		File file = new File(fileName);
 		if (file.exists()) {
 			try {
@@ -173,7 +174,7 @@ public class CodebookFactory {
 	 * @param fileName	Filename for the codebook.
 	 * @throws IOException	Thrown if writing to disk fails.
 	 */
-	public static void serializeCodebook(Codebook codebook, String fileName)
+	private static void serializeCodebook(Codebook codebook, String fileName)
 			throws IOException {
 		OutputStream file = new FileOutputStream(fileName);
 		OutputStream buffer = new BufferedOutputStream(file);
@@ -192,7 +193,7 @@ public class CodebookFactory {
 	 * @param fileName	Filename of the codebook.
 	 * @throws IOException	Thrown if reading from disk fails.
 	 */
-	public static Codebook deserializeCodebook(String fileName)
+	private static Codebook deserializeCodebook(String fileName)
 			throws IOException, ClassNotFoundException {
 		InputStream file = new FileInputStream(fileName);
 		InputStream buffer = new BufferedInputStream(file);

@@ -168,7 +168,7 @@ public class WalkData extends Data {
 	}
 	
 	public void writeData(final List<String> labels) throws IOException {
-		System.out.println("Filtering " + this.file.getName());
+		//System.out.println("Filtering " + this.file.getName());
 		if (this.numOfWindows() == 0) return;
 		
 		Instances writeInstances = new Instances(
@@ -194,6 +194,8 @@ public class WalkData extends Data {
 		String parent = this.file.getParentFile().getName();
 		File outputFile = new File("Project/filtered_"+parent+
 				"/filtered_"+this.file.getName());
+		//Make directory if it didn't exist yet
+		outputFile.getParentFile().mkdirs();
 		CSVSaver saver = new CSVSaver();
 		saver.setInstances(writeInstances);
 		saver.setFile(outputFile);

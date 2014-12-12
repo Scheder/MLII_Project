@@ -1,12 +1,22 @@
 package main;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import org.apache.commons.math3.linear.ArrayRealVector;
+import org.jfree.ui.ApplicationFrame;
+import org.jfree.ui.RefineryUtilities;
 
 import weka.core.FastVector;
 import codebook.Codebook;
@@ -21,9 +31,6 @@ import data.WalkData;
 
 public class Main {
 
-	final static public String walkCodebookFile = "backup_codebook.ser";
-	final static public String personCodebookFile = "backup_codebook.ser";
-	
 	/**
 	 * FilenameFilter selecting CSV filenames.
 	 */
@@ -38,13 +45,81 @@ public class Main {
 	
 	public static void main(String[] args) throws Exception {
 		long start = System.nanoTime();
-		//TODO pretty print exception
 
-		Main.filterAndEvaluateCodebooks();
-		Main.labelTestData("Project/test");
+		Main.visualize();
+		
+//		Main.filterAndEvaluateCodebooks();
+//		Main.labelTestData("Project/test");
 		
 		double elapsedTimeInSec = (System.nanoTime() - start) * 1e-9;
 		System.out.println("Finished after " + elapsedTimeInSec + " seconds.");
+	}
+	
+	private static void visualize() throws Exception {
+		final ApplicationFrame frame = new ApplicationFrame("MLII Project");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		final LabeledFrameSet walkLabeled = 
+				Main.getLabeledWalkFrameSet("Project/labeled_train");
+		//Get codebook
+		final Codebook walkCodebook = CodebookFactory.getWalkCodebook();
+		final CodebookClassifier classifier = 
+				ClassifierFactory.
+				createWalkClassifier(walkCodebook, walkLabeled);
+		
+		final LabeledFrameSet personLabeled =
+				Main.getLabeledPersonFrameSet("Project/labeled_train");
+		final Codebook personCodebook = CodebookFactory.getPersonCodebook();
+		final CodebookClassifier personClassifier =
+				ClassifierFactory.
+				createPersonClassifier(personCodebook, personLabeled);
+
+		JButton button = new JButton("Browse...");
+		button.addActionListener( new ActionListener() {
+			
+			private File currentDirectory = 
+					new File(System.getProperty("user.dir"));
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setMultiSelectionEnabled(true);
+				FileNameExtensionFilter filter = 
+						new FileNameExtensionFilter("CSV files", "CSV");
+				fileChooser.setFileFilter(filter);
+				fileChooser.setCurrentDirectory(currentDirectory);
+				int result = fileChooser.showOpenDialog(frame);
+				
+				if (result == JFileChooser.APPROVE_OPTION) {
+					currentDirectory = fileChooser.getCurrentDirectory();
+					File[] files = fileChooser.getSelectedFiles();
+					for (File file : files) {
+						System.out.println(
+								"Classifying: " + file.getName() + "...");
+						try {
+							Main.writeFilteredWalkFile(classifier,file);
+							File filteredFile = new File(
+									"Project/filtered_"+
+											file.getParentFile().getName()+
+											"/filtered_"+file.getName());
+							personClassifier.classifyFile(filteredFile);
+						} catch (Exception e1) {
+							JOptionPane.showMessageDialog(
+									frame,
+									"File could not be processed",
+									file.getName(),
+									JOptionPane.ERROR_MESSAGE);
+						}
+					}
+				}
+			}
+		});
+		
+		frame.add(button);
+		
+		RefineryUtilities.centerFrameOnScreen(frame);
+		frame.pack();
+		frame.setVisible(true);
 	}
 	
 	private static void labelTestData(final String folder) throws Exception {
@@ -52,8 +127,7 @@ public class Main {
 		LabeledFrameSet walkLabeled = 
 				Main.getLabeledWalkFrameSet("Project/labeled_train");
 		//Get codebook
-		Codebook walkCodebook = 
-				CodebookFactory.deserializeCodebook(Main.walkCodebookFile);
+		Codebook walkCodebook = CodebookFactory.getWalkCodebook();
 		CodebookClassifier classifier = 
 				ClassifierFactory.
 				createWalkClassifier(walkCodebook, walkLabeled);
@@ -61,8 +135,7 @@ public class Main {
 		
 		LabeledFrameSet personLabeled =
 				Main.getLabeledPersonFrameSet("Project/labeled_train");
-		Codebook personCodebook =
-				CodebookFactory.deserializeCodebook(Main.personCodebookFile);
+		Codebook personCodebook = CodebookFactory.getPersonCodebook();
 		CodebookClassifier personClassifier =
 				ClassifierFactory.
 				createPersonClassifier(personCodebook, personLabeled);
@@ -179,16 +252,22 @@ public class Main {
 		System.out.println("Filtering walk data...");
 		File folder = new File(folderName);
 		for (File file : folder.listFiles(new Main.CSVFilter())) {
-			WalkData d = new WalkData();
 			try {
-				d.readCSV(file);
-			} catch (IOException e) {
+				Main.writeFilteredWalkFile(classifier, file);
+			} catch (Exception e) {
 				//Continue to the next file with empty files
 				continue;
 			}
-			List<String> labels = classifier.getLabels(d);
-			d.writeData(labels);
 		}
+	}
+	
+	private static void writeFilteredWalkFile(
+			CodebookClassifier classifier, File file) throws Exception {
+		//System.out.println("Filtering out walk data...");
+		WalkData d = new WalkData();
+		d.readCSV(file);
+		List<String> labels = classifier.getLabels(d);
+		d.writeData(labels);
 	}
 	
 }
