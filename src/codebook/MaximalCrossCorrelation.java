@@ -4,8 +4,25 @@ import org.apache.commons.math3.linear.RealVector;
 
 import smile.math.Math;
 
+/**
+ * Class implementing the maximal cross-correlation distance function.
+ *
+ */
 public class MaximalCrossCorrelation {
 
+	/**
+	 * Returns the maximal cross-correlation distance for two vectors.
+	 * 
+	 * The maximal cross-correlation is defined as the maximal sum of
+	 * v1(tau)*v2(n+tau-t), with tau ranging from the maximum of (0, t-n) 
+	 * to the minimum of (t, n) and t variable.
+	 * 
+	 * In other words: $max sum_{tau = max(0,t-n)}^{min(t,n)} v_1(tau)*
+	 * v2(n+tau-n)$, for t variable.
+	 * @param v1
+	 * @param v2
+	 * @return
+	 */
 	public static double distance(RealVector v1, RealVector v2) {
 		
 		int n = v1.getDimension();
