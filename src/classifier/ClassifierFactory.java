@@ -34,8 +34,7 @@ public class ClassifierFactory {
 			Codebook codebook, LabeledFrameSet labeled) throws Exception {
 		
 		FrameSet activations = codebook.activate(labeled);
-		LabeledFrameSet labeledActivations = 
-				activations.labelFrameSet(labeled.getLabelList());
+		LabeledFrameSet labeledActivations = activations.labelFrameSet(labeled.getLabelList());
 		
 		FastVector walkingValues = new FastVector(2);
 		walkingValues.addElement("Yes");
@@ -108,7 +107,7 @@ public class ClassifierFactory {
 	}
 	
 	public static Codebook getCodebook(FrameSet unlabeled) 
-			throws ClassNotFoundException, IOException {
+			throws Exception {
 		File file = new File("codebook.ser");
 		if (file.exists()) {
 			Codebook codebook = ClassifierFactory.deserializeCodebook();
@@ -153,8 +152,7 @@ public class ClassifierFactory {
 	 * @param classValues
 	 * @return
 	 */
-	public static Instances activationsToInstances(FrameSet activations,
-			String className, FastVector classValues) {
+	public static Instances activationsToInstances(FrameSet activations,String className, FastVector classValues) {
 		int numOfFrames = activations.size();
 		int numOfBasicVectors = activations.dimension();
 		int numOfAttributes = numOfBasicVectors+1;
@@ -190,8 +188,7 @@ public class ClassifierFactory {
 	 * @param classValues
 	 * @return
 	 */
-	public static Instances activationsToInstances(LabeledFrameSet activations,
-			String className, FastVector classValues) {
+	public static Instances activationsToInstances(LabeledFrameSet activations,String className, FastVector classValues) {
 		int numOfFrames = activations.size();
 		int numOfBasicVectors = activations.dimension();
 		int numOfAttributes = numOfBasicVectors+1;
@@ -231,8 +228,7 @@ public class ClassifierFactory {
 		}
 	}
 	
-	private static Codebook deserializeCodebook() 
-			throws IOException, ClassNotFoundException {
+	private static Codebook deserializeCodebook() throws IOException, ClassNotFoundException {
 		InputStream file = new FileInputStream("codebook.ser");
 		InputStream buffer = new BufferedInputStream(file);
 		ObjectInput input = new ObjectInputStream (buffer);
