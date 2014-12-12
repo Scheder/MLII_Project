@@ -7,7 +7,7 @@ This is the readme for the project of the Machine Learning and Inductive
 Folder structure
 ================
 
-The delivered zip file, named MLII_Simon_Slangen_Peter_Raeves_201415.zip,
+The delivered zip file, named MLII\_Simon\_Slangen\_Peter\_Raeves\_201415.zip,
 contains:
 
 	- mlii.jar: The main classifying application
